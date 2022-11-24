@@ -1,5 +1,6 @@
 window.addEventListener('load',function(e)
 {
+
    
 
     const searchButton = document.querySelector('#searchButton');
@@ -29,6 +30,20 @@ window.addEventListener('load',function(e)
 
                 if(w !== null || w !== "")
                 {
+                    //! Review
+                    $(document).ready(function(){
+  
+
+      
+                        // Click event handler for the 'show' button
+                        $( "#searchButton" ).click(function() {
+                        
+                          // Fade in the element
+                          $( ".custom-card" ).fadeIn();
+                          
+                        });
+                      
+                      }); 
                     output +=`
                  
 
