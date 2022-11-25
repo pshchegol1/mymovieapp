@@ -1,7 +1,10 @@
 window.addEventListener('load',function(e)
 {
 
-   
+    $('#myModal').on('shown.bs.modal', function () {
+        $('#myInput').trigger('focus')
+        
+      })
 
     const searchButton = document.querySelector('#searchButton');
     const form = document.querySelector('form');
@@ -30,20 +33,7 @@ window.addEventListener('load',function(e)
 
                 if(w !== null || w !== "")
                 {
-                    //! Review
-                    $(document).ready(function(){
-  
 
-      
-                        // Click event handler for the 'show' button
-                        $( "#searchButton" ).click(function() {
-                        
-                          // Fade in the element
-                          $( ".custom-card" ).fadeIn();
-                          
-                        });
-                      
-                      }); 
                     output +=`
                  
 
@@ -55,12 +45,31 @@ window.addEventListener('load',function(e)
                             
                            
                         </div>
-                        <div class="card">
-                        <div class="card-body mt-4">
-                            <h4 class="card-title">Card title</h4>
-                            <a href="#" class="card-link">Card link</a>
-                            <a href="#" class="card-link">Another link</a>
-                        </div>
+
+                        <!-- Button trigger modal -->
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+                          More Info...
+                        </button>
+                        
+                        <!-- Modal -->
+                        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">${element.show.name}</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                              <div class="modal-body">
+                                <h4></h4>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary">Save changes</button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                     </div>
     
@@ -88,3 +97,4 @@ window.addEventListener('load',function(e)
 
 
 })//window load
+
