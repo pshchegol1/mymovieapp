@@ -30,8 +30,8 @@ window.addEventListener('load',function(e)
             data.forEach(element => {
 
                 const w = element["show"]["image"]
-
-                if(w !== null || w !== "")
+                let showImage = "";
+                if(w !== null )
                 {
 
                     output +=`
@@ -74,6 +74,10 @@ window.addEventListener('load',function(e)
                     </div>
     
                     `;
+                }
+                else
+                {
+                  showImage = "./../img/noimg.jpg"
                 }
 
 
