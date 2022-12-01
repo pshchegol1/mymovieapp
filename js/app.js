@@ -31,6 +31,7 @@ window.addEventListener('load',function(e)
 
                 const w = element["show"]["image"]
                 let showImage = "";
+                
                 if(w !== null )
                 {
 
