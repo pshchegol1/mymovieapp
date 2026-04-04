@@ -20,37 +20,71 @@
   <div class="row content">
     <div class="col-sm-3 sidenav">
 
-      <h1 class="movie-title m-5 text-center"><span class="badge bg-primary"></i> Movie App</span></h1>
-        <form id="search-form">
-          <div class="input-group">
-            <input type="text" class="form-control search-input bg-light" required placeholder="Search Movie..">
-            <button id="searchButton" type="submit" class="btn btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
-          </div>
-        </form>
-        <div class="sideCard">
-          <div class="card  mb-3 mt-5" style="max-width: 26.1rem;">
-            <div class="card-header"></div>
-            <div class="card-body text-center">
-              <img class="custom-gif mb-3" src="./img/movie.gif" alt="gif">
-              <!-- Animated movie icon using FontAwesome -->
-              <div style="font-size: 2.8rem; color: #2196f3; animation: popMovieIcon 1.5s infinite alternate cubic-bezier(.4,2,.6,1);">
-                <i class="fa-solid fa-clapperboard"></i>
-                <i class="fa-solid fa-film" style="margin-left: 0.5rem;"></i>
-              </div>
-              <!-- Fun movie quote -->
-              <div style="margin-top: 1.2rem; font-size: 1.1rem; color: #444; font-style: italic;">
-                <span>“Movies touch our hearts and awaken our vision.”</span>
-              </div>
+      <h1 class="movie-title m-5 text-center">
+        <span class="badge bg-primary">
+          <i class="fa-solid fa-film" style="margin-right:0.5rem;"></i>Movie App
+        </span>
+      </h1>
+      <form id="search-form">
+        <div class="input-group">
+          <input type="text" class="form-control search-input bg-light" required placeholder="Search Movie..">
+          <button id="searchButton" type="submit" class="btn btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+      </form>
+      <div class="sideCard">
+        <div class="card mb-3 mt-5" style="max-width: 26.1rem;">
+          <div class="card-header"></div>
+          <div class="card-body text-center">
+            <img class="custom-gif mb-3" src="./img/movie.gif" alt="gif">
+            <!-- Animated movie icon using FontAwesome -->
+            <div style="font-size: 2.8rem; color: #2196f3; animation: popMovieIcon 1.5s infinite alternate cubic-bezier(.4,2,.6,1);">
+              <i class="fa-solid fa-clapperboard"></i>
+              <i class="fa-solid fa-film" style="margin-left: 0.5rem;"></i>
+            </div>
+            <!-- Fun movie quote -->
+            <div style="margin-top: 1.2rem; font-size: 1.1rem; color: #444; font-style: italic;">
+              <span>“Movies touch our hearts and awaken our vision.”</span>
             </div>
           </div>
+        </div>
+        <hr>
+        <!-- Entertaining Content: Movie Fun Fact -->
+        <div class="card mb-3" style="max-width: 26.1rem; background: #fffbe7; border-left: 5px solid #ffb300;">
+          <div class="card-body">
+            <h5 class="card-title" style="color:#ff9800;"><i class="fa-solid fa-lightbulb"></i> Movie Fun Fact</h5>
+            <p class="card-text" id="movie-fun-fact" style="color:#333; font-size:1rem;">Did you know? The longest movie ever made is over 85 hours long!</p>
+          </div>
+        </div>
+<hr>
+        <!-- Entertaining Content: Random Movie Quote -->
+        <div class="card mb-3" style="max-width: 26.1rem; background: #f3e5f5; border-left: 5px solid #8e24aa;">
+          <div class="card-body">
+            <h5 class="card-title" style="color:#8e24aa;"><i class="fa-solid fa-quote-left"></i> Random Movie Quote</h5>
+            <blockquote class="blockquote" id="random-movie-quote" style="font-size:1rem; color:#333;">"May the Force be with you."</blockquote>
+          </div>
+        </div>
+        <hr>
+        <!-- Entertaining Animation: Spinning Oscar Statuette -->
+        <div class="text-center mb-3">
+          <span style="display:inline-block; animation: spinOscar 2.5s linear infinite; font-size:2.7rem; color:#ffd700; filter: drop-shadow(0 2px 8px #ffecb3);">
+            <i class="fa-solid fa-award"></i>
+          </span>
+          <div style="font-size:1rem; color:#888; margin-top:0.3rem; font-style:italic;">And the Oscar goes to... <span style="color:#ffb300;">You!</span></div>
+        </div>
+        <style>
+        @keyframes spinOscar {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
         </style>
+        <hr>
         <style>
         @keyframes popMovieIcon {
           0% { transform: scale(1) rotate(-5deg); }
           100% { transform: scale(1.18) rotate(8deg); }
         }
         </style>
-        </div>
+      </div>
 
       
     </div>
@@ -75,17 +109,79 @@
         </a>
       </div>
       <!-- End Trending Movies Carousel -->
-      <div style="box-shadow: 0 8px 32px 0 rgba(31,38,135,0.10); border-radius: 1.2rem; background: rgba(255,255,255,0.85); padding: 1.5rem 1rem 2rem 1rem;">
-        <h1 class="movie-title text-center"><span class="badge bg-primary"><i class="fa-solid fa-film"></i> TV Show Information</span></h1>
+      <div style="box-shadow: 0 8px 32px 0 rgba(31,38,135,0.10); border-radius: 1.2rem; background: #234C6A; padding: 1.5rem 1rem 2rem 1rem;">
+        <h1 class="movie-title text-center">
+          <span class="badge bg-primary moving-title" id="movingTitle">
+            <i class="fa-solid fa-circle-info"></i> 
+            <span class="moving-letters">
+              <span>T</span><span>V</span> <span>S</span><span>h</span><span>o</span><span>w</span> <span>I</span><span>n</span><span>f</span><span>o</span><span>r</span><span>m</span><span>a</span><span>t</span><span>i</span><span>o</span><span>n</span>
+            </span>
+          </span>
+        </h1>
+        <style>
+        .moving-title .moving-letters span {
+          display: inline-block;
+          transition: transform 0.3s cubic-bezier(.4,2,.6,1);
+        }
+        .moving-title.wave .moving-letters span {
+          animation: waveMove 1.2s cubic-bezier(.4,2,.6,1) 1;
+        }
+        .moving-title.wave .moving-letters span:nth-child(1) { animation-delay: 0s; }
+        .moving-title.wave .moving-letters span:nth-child(2) { animation-delay: 0.05s; }
+        .moving-title.wave .moving-letters span:nth-child(3) { animation-delay: 0.10s; }
+        .moving-title.wave .moving-letters span:nth-child(4) { animation-delay: 0.15s; }
+        .moving-title.wave .moving-letters span:nth-child(5) { animation-delay: 0.20s; }
+        .moving-title.wave .moving-letters span:nth-child(6) { animation-delay: 0.25s; }
+        .moving-title.wave .moving-letters span:nth-child(7) { animation-delay: 0.30s; }
+        .moving-title.wave .moving-letters span:nth-child(8) { animation-delay: 0.35s; }
+        .moving-title.wave .moving-letters span:nth-child(9) { animation-delay: 0.40s; }
+        .moving-title.wave .moving-letters span:nth-child(10) { animation-delay: 0.45s; }
+        .moving-title.wave .moving-letters span:nth-child(11) { animation-delay: 0.50s; }
+        .moving-title.wave .moving-letters span:nth-child(12) { animation-delay: 0.55s; }
+        .moving-title.wave .moving-letters span:nth-child(13) { animation-delay: 0.60s; }
+        .moving-title.wave .moving-letters span:nth-child(14) { animation-delay: 0.65s; }
+        .moving-title.wave .moving-letters span:nth-child(15) { animation-delay: 0.70s; }
+        .moving-title.wave .moving-letters span:nth-child(16) { animation-delay: 0.75s; }
+        .moving-title.wave .moving-letters span:nth-child(17) { animation-delay: 0.80s; }
+        @keyframes waveMove {
+          0% { transform: translateY(0); }
+          20% { transform: translateY(-18px) scale(1.18) rotate(-8deg); color: #ffe082; }
+          40% { transform: translateY(6px) scale(1.08) rotate(6deg); color: #fffbe7; }
+          60% { transform: translateY(-10px) scale(1.12) rotate(-4deg); color: #90caf9; }
+          100% { transform: translateY(0); color: inherit; }
+        }
+        </style>
+        <script>
+        // Occasionally trigger the wave animation
+        setInterval(function() {
+          var el = document.getElementById('movingTitle');
+          if (el) {
+            el.classList.remove('wave');
+            void el.offsetWidth; // force reflow
+            el.classList.add('wave');
+            setTimeout(function() { el.classList.remove('wave'); }, 1400);
+          }
+        }, 4200);
+        </script>
         <div class="display-data custom-card">
         </div>
+        <nav id="pagination-nav" aria-label="Random movies pagination" style="margin-top:1.5rem; display:flex; justify-content:center;"></nav>
       </div>
     </div>
   </div>
 </div>
 
 <footer class="container-fluid text-center">
-  <p><i class="fa-solid fa-tv"></i></p>
+  <div class="footer-entertain">
+    <span style="font-size:2rem; color:#ffe082; margin-right:0.7rem; vertical-align:middle;">
+      <i class="fa-solid fa-film"></i>
+      <i class="fa-solid fa-clapperboard" style="margin-left:0.4rem;"></i>
+      <i class="fa-solid fa-popcorn" style="margin-left:0.4rem;"></i>
+    </span>
+    <span style="font-size:1.15rem; color:#fff; font-style:italic; vertical-align:middle;">
+      Enjoy your movie night! <span style="color:#ffe082;">🍿</span> <span style="font-size:1.3rem; color:#90caf9;">#MovieMagic</span>
+    </span>
+  </div>
 </footer>
 
 <script src="./js/app.js"></script>

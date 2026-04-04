@@ -1,3 +1,85 @@
+    /* Custom Pagination Styles */
+    .custom-pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .custom-pagination .page-item {
+      margin: 0 0.18rem;
+    }
+    .custom-pagination .page-link {
+      color: #2196f3;
+      background: #fff;
+      border: 1.5px solid #2196f3;
+      border-radius: 1.2rem;
+      font-weight: 600;
+      font-size: 1.08rem;
+      padding: 0.45rem 1.1rem;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(33,150,243,0.08);
+    }
+    .custom-pagination .page-link:hover, .custom-pagination .page-item.active .page-link {
+      background: linear-gradient(90deg, #234C6A 0%, #456882 100%);
+      color: #fff;
+      border-color: #234C6A;
+      box-shadow: 0 4px 16px 0 rgba(33,150,243,0.13);
+    }
+    .custom-pagination .page-item.disabled .page-link {
+      color: #b0bec5;
+      background: #f5f5f5;
+      border-color: #b0bec5;
+      cursor: not-allowed;
+    }
+    /* Enhanced Carousel Overlay and Badges */
+    #trendingCarousel .carousel-img-overlay {
+      position: relative;
+    }
+    #trendingCarousel .carousel-gradient-overlay {
+      position: absolute;
+      left: 0; right: 0; bottom: 0; top: 0;
+      border-radius: 1.2rem 1.2rem 0 0;
+      background: linear-gradient(180deg, rgba(35,76,106,0.05) 60%, rgba(35,76,106,0.85) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+    #trendingCarousel .carousel-badges {
+      position: absolute;
+      left: 1.2rem;
+      top: 1.2rem;
+      z-index: 3;
+      display: flex;
+      gap: 0.7rem;
+    }
+    #trendingCarousel .badge-info {
+      background: #2196f3;
+      color: #fff;
+      font-size: 1rem;
+      padding: 0.5em 1em;
+      border-radius: 1.2rem;
+      box-shadow: 0 2px 8px rgba(33,150,243,0.12);
+    }
+    #trendingCarousel .badge-warning {
+      background: #ffc107;
+      color: #222;
+      font-size: 1rem;
+      padding: 0.5em 1em;
+      border-radius: 1.2rem;
+      box-shadow: 0 2px 8px rgba(255,193,7,0.12);
+    }
+    #trendingCarousel .carousel-caption h5 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    #trendingCarousel .carousel-caption p {
+      margin-top: 0.7rem;
+      font-size: 1.1rem;
+      color: #ffe082;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
     /* Carousel image fit and visibility */
     #trendingCarousel .carousel-item img {
       width: 100%;
@@ -47,24 +129,43 @@
       box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
     }
     /* Set height of the grid so .sidenav can be 100% (adjust if needed) */
-    .row.content {height: 100vh}
+    .row.content {
+      height: 100vh;
+      background-color: #234C6A;
+    }
     
     /* Set gray background color and 100% height */
     .sidenav {
-      background-color: #f1f1f1;
+      background-color: #456882;
       height: auto;
     }
     
     /* Set black background color, white text and some padding */
     footer {
-      background-color: rgb(103, 119, 118);
-      color: white;
-      padding: 15px;
+      background: linear-gradient(90deg, #234C6A 0%, #456882 100%);
+      color: #fff;
+      padding: 0;
       position: fixed;
       bottom: 0;
       width: 100%;
-      height: 60px;
+      height: 64px;
       margin-top: -50px;
+      box-shadow: 0 -4px 24px 0 rgba(31,38,135,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .custom-pagination {
+      margin-bottom: 80px !important;
+    }
+    .footer-entertain {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+      height: 100%;
     }
 
 
@@ -77,6 +178,7 @@
 
 .main-content {
   height: auto;
+  background-color: #234C6A;
 }
 
 .custom-card{
