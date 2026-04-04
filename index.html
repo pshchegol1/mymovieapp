@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Movie App</title>
+  <title>MovieMatrix</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -21,9 +21,20 @@
     <div class="col-sm-3 sidenav">
 
       <h1 class="movie-title m-5 text-center">
-        <span class="badge bg-primary">
-          <i class="fa-solid fa-film" style="margin-right:0.5rem;"></i>Movie App
+        <span class="badge bg-primary moviematrix-badge">
+          <span class="moviematrix-icon">
+            <i class="fa-solid fa-film"></i>
+          </span>
+          <span class="moviematrix-title">
+            <span class="mm-letter">M</span><span class="mm-letter">o</span><span class="mm-letter">v</span><span class="mm-letter">i</span><span class="mm-letter">e</span><span class="mm-letter">M</span><span class="mm-letter">a</span><span class="mm-letter">t</span><span class="mm-letter">r</span><span class="mm-letter">i</span><span class="mm-letter">x</span>
+          </span>
         </span>
+        <div class="now-playing-marquee-wrap">
+          <div class="now-playing-label"><i class="fa-solid fa-bolt"></i> Now Playing</div>
+          <div class="now-playing-marquee" id="nowPlayingMarquee">
+            <span>Loading trending movies...</span>
+          </div>
+        </div>
       </h1>
       <form id="search-form">
         <div class="input-group">
@@ -98,6 +109,11 @@
           <li data-target="#trendingCarousel" data-slide-to="2"></li>
         </ol>
         <div class="carousel-inner">
+          <div class="animated-loader">
+            <div class="loader-film-reel"></div>
+            <span class="loader-clapperboard"><i class="fa-solid fa-clapperboard"></i></span>
+            <span class="loader-popcorn"><i class="fa-solid fa-popcorn"></i></span>
+          </div>
         </div>
         <a class="carousel-control-prev" href="#trendingCarousel" role="button" data-slide="prev">
           <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -179,7 +195,7 @@
       <i class="fa-solid fa-popcorn" style="margin-left:0.4rem;"></i>
     </span>
     <span style="font-size:1.15rem; color:#fff; font-style:italic; vertical-align:middle;">
-      Enjoy your movie night! <span style="color:#ffe082;">🍿</span> <span style="font-size:1.3rem; color:#90caf9;">#MovieMagic</span>
+      Enjoy your movie night! <span style="color:#ffe082;">🍿</span> <span style="font-size:1.3rem; color:#90caf9;">#MovieMatrix</span>
     </span>
   </div>
 </footer>

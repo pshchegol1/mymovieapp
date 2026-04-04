@@ -64,6 +64,19 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 // Fetch trending shows and populate carousel
 window.addEventListener('DOMContentLoaded', function() {
+  // --- Now Playing Marquee Logic ---
+  fetch('https://api.tvmaze.com/shows?page=1')
+    .then(response => response.json())
+    .then(shows => {
+      const trending = shows.filter(show => show.image && show.image.medium).slice(0, 18);
+      const marquee = document.getElementById('nowPlayingMarquee');
+      if (marquee) {
+        const titles = trending.map(show => `🎬 ${show.name}`).join('  •  ');
+        // Duplicate the titles for seamless looping
+        marquee.innerHTML = `<span>${titles}  •  ${titles}</span>`;
+      }
+    });
+
         // Also show random movies below the carousel on first load
         fetch('https://api.tvmaze.com/shows?page=1')
             .then(response => response.json())
@@ -141,9 +154,9 @@ window.addEventListener('DOMContentLoaded', function() {
                               </div>
                               <div class="modal-body">
                                 <img src="${showImage}" alt="${show.name}" class="img-fluid mb-2">
-                                <p><strong>Genres:</strong> ${genres.join(', ')}</p>
-                                <p><strong>Rating:</strong> ${rating}</p>
-                                <p><strong>Premiered:</strong> ${premiered}</p>
+                                  <p><strong><i class="fa-solid fa-tags" style="color:#2196f3;"></i> Genres:</strong> ${genres.join(', ')}</p>
+                                  <p><strong><i class="fa-solid fa-star" style="color:#ffb300;"></i> Rating:</strong> ${rating}</p>
+                                  <p><strong><i class="fa-solid fa-calendar-days" style="color:#8e24aa;"></i> Premiered:</strong> ${premiered}</p>
                                 <p><strong>Summary:</strong> ${summary}</p>
                                 <a href="${show.officialSite || show.url}" target="_blank" class="btn btn-outline-info btn-sm">Official Site</a>
                               </div>
@@ -296,8 +309,14 @@ window.addEventListener('load',function(e)
           return;
         }
 
-        // Show loading spinner
-        display.innerHTML = `<div class="spinner-container"><div class="film-reel-loader"><div class="reel"></div></div></div>`;
+        // Show animated loader (film reel, clapperboard, popcorn)
+        display.innerHTML = `
+          <div class="animated-loader">
+            <div class="loader-film-reel"></div>
+            <span class="loader-clapperboard"><i class="fa-solid fa-clapperboard"></i></span>
+            <span class="loader-popcorn"><i class="fa-solid fa-popcorn"></i></span>
+          </div>
+        `;
         if (nav) nav.style.display = 'none';
 
         fetch(`https://api.tvmaze.com/search/shows?q=${searchInput}`)
