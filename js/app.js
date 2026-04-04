@@ -8,6 +8,60 @@ document.addEventListener('click', function(e) {
 });
 // --- Entertaining Content Logic for Sidenav ---
 window.addEventListener('DOMContentLoaded', function() {
+    // --- Animated Movie Countdown Logic ---
+    // Mock upcoming movies (replace with real API if available)
+    const upcomingMovies = [
+      {
+        title: 'Avengers: Secret Wars',
+        release: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 2, 20, 0, 0) // 2 days from now, 8pm
+      },
+      {
+        title: 'Star Wars: New Dawn',
+        release: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 7, 18, 30, 0) // 7 days from now, 6:30pm
+      },
+      {
+        title: 'Jurassic World: Extinction',
+        release: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 14, 21, 0, 0) // 14 days from now, 9pm
+      }
+    ];
+
+    function pad(n) { return n < 10 ? '0' + n : n; }
+
+    function updateCountdowns() {
+      const list = document.getElementById('movie-countdown-list');
+      if (!list) return;
+      list.innerHTML = '';
+      upcomingMovies.forEach((movie, idx) => {
+        const now = new Date();
+        let diff = Math.max(0, movie.release - now);
+        const total = Math.max(1, movie.release - (movie.start || (movie.start = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7)))); // 1 week default window
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        diff -= days * (1000 * 60 * 60 * 24);
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        diff -= hours * (1000 * 60 * 60);
+        const mins = Math.floor(diff / (1000 * 60));
+        diff -= mins * (1000 * 60);
+        const secs = Math.floor(diff / 1000);
+        const finished = (movie.release - now) <= 0;
+        // Progress bar: percent complete from start to release
+        const percent = finished ? 100 : Math.min(100, 100 - ((movie.release - now) / total) * 100);
+        // Flip animation: force reflow by changing key
+        const flipKey = `${days}${hours}${mins}${secs}`;
+        list.innerHTML += `
+          <div class="movie-countdown-item">
+            <span class="countdown-movie-title">${movie.title}</span>
+            <div class="countdown-timer">
+              <span class="countdown-nums" style="animation: countdownFlip 0.7s;" data-flip="${flipKey}">
+                ${finished ? '<span style=\'color:#43a047\'>Now Showing!</span>' : `${pad(days)}d ${pad(hours)}h ${pad(mins)}m ${pad(secs)}s`}
+              </span>
+            </div>
+            <div class="countdown-progress-bar"><div class="countdown-progress" style="width:${percent}%;"></div></div>
+          </div>
+        `;
+      });
+    }
+    setInterval(updateCountdowns, 9000);
+    updateCountdowns();
   // Fun facts and quotes arrays
   const funFacts = [
     'Did you know? The longest movie ever made is over 85 hours long!',
@@ -68,7 +122,7 @@ window.addEventListener('DOMContentLoaded', function() {
   fetch('https://api.tvmaze.com/shows?page=1')
     .then(response => response.json())
     .then(shows => {
-      const trending = shows.filter(show => show.image && show.image.medium).slice(0, 18);
+      const trending = shows.filter(show => show.image && show.image.medium).slice(0, 20);
       const marquee = document.getElementById('nowPlayingMarquee');
       if (marquee) {
         const titles = trending.map(show => `🎬 ${show.name}`).join('  •  ');
@@ -89,7 +143,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
                 function renderPage(page) {
                     // Pick 8 random shows for the page (no repeats per page, but can repeat across pages)
-                    const used = [];
+                    
                     let picks = [];
                     let poolCopy = [...pool];
                     while (picks.length < perPage && poolCopy.length > 0) {
@@ -354,7 +408,7 @@ window.addEventListener('load',function(e)
                   </div>
                 </div>
                 `;
-                // Append modal HTML outside the card for Bootstrap 4 compatibility
+                // Append modal HTML outside the card for Bootstrap 4 compatibility, now with icons
                 output += `
                   <div class="modal fade" id="${cardId}" tabindex="-1" role="dialog" aria-labelledby="${cardId}Label" aria-hidden="true">
                     <div class="modal-dialog" role="document">
@@ -367,9 +421,9 @@ window.addEventListener('load',function(e)
                         </div>
                         <div class="modal-body">
                           <img src="${showImage}" alt="${show.name}" class="img-fluid mb-2">
-                          <p><strong>Genres:</strong> ${genres}</p>
-                          <p><strong>Rating:</strong> ${rating}</p>
-                          <p><strong>Premiered:</strong> ${premiered}</p>
+                          <p><strong><i class=\"fa-solid fa-tags\" style=\"color:#2196f3;\"></i> Genres:</strong> ${genres}</p>
+                          <p><strong><i class=\"fa-solid fa-star\" style=\"color:#ffb300;\"></i> Rating:</strong> ${rating}</p>
+                          <p><strong><i class=\"fa-solid fa-calendar-days\" style=\"color:#8e24aa;\"></i> Premiered:</strong> ${premiered}</p>
                           <p><strong>Summary:</strong> ${summary}</p>
                           <a href="${show.officialSite || show.url}" target="_blank" class="btn btn-outline-info btn-sm">Official Site</a>
                         </div>

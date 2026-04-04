@@ -1,3 +1,123 @@
+    /* Modern Upcoming Movie Countdown Card */
+    .modern-countdown-card {
+      max-width: 26.1rem;
+      background: rgba(255,255,255,0.75);
+      border-radius: 1.3rem;
+      box-shadow: 0 8px 32px 0 rgba(33,150,243,0.13), 0 1.5px 8px 0 rgba(33,150,243,0.10);
+      backdrop-filter: blur(10px) saturate(1.2);
+      border: 1.5px solid #90caf9;
+      margin-bottom: 1.2rem;
+      padding: 1.1rem 1.2rem 1.2rem 1.2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .modern-countdown-header {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 0.7rem;
+    }
+    .modern-countdown-icon {
+      font-size: 2.1rem;
+      color: #2196f3;
+      filter: drop-shadow(0 2px 8px #90caf9);
+      animation: mmIconPop 1.6s infinite alternate cubic-bezier(.4,2,.6,1);
+    }
+    .modern-countdown-title {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: #234C6A;
+      letter-spacing: 0.03em;
+    }
+    .movie-countdown-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 1.3rem;
+      background: rgba(144,202,249,0.10);
+      border-radius: 0.8rem;
+      padding: 0.7rem 0.8rem 0.7rem 0.8rem;
+      box-shadow: 0 2px 8px 0 rgba(33,150,243,0.07);
+      position: relative;
+    }
+    .countdown-movie-title {
+      font-size: 1.13rem;
+      color: #1565c0;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      letter-spacing: 0.01em;
+    }
+    .countdown-timer {
+      font-size: 1.25rem;
+      color: #1565c0;
+      font-weight: 700;
+      margin-top: 0.1rem;
+      letter-spacing: 0.04em;
+      display: flex;
+      gap: 0.5rem;
+    }
+    .countdown-nums {
+      display: inline-block;
+      min-width: 8.5rem;
+      font-variant-numeric: tabular-nums;
+      animation: countdownFlip 0.7s cubic-bezier(.4,2,.6,1);
+      background: linear-gradient(90deg, #e3f2fd 0%, #fff 100%);
+      border-radius: 0.5rem;
+      padding: 0.18em 0.7em;
+      box-shadow: 0 2px 8px 0 rgba(33,150,243,0.08);
+    }
+    @keyframes countdownFlip {
+      0% { transform: rotateX(90deg) scale(1.2); color: #ffb300; }
+      60% { transform: rotateX(-10deg) scale(1.08); color: #90caf9; }
+      100% { transform: rotateX(0) scale(1); color: #1565c0; }
+    }
+    .countdown-progress-bar {
+      width: 100%;
+      height: 7px;
+      background: #e3f2fd;
+      border-radius: 0.5rem;
+      margin-top: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 4px 0 rgba(33,150,243,0.08);
+    }
+    .countdown-progress {
+      height: 100%;
+      background: linear-gradient(90deg, #2196f3 0%, #ffb300 100%);
+      border-radius: 0.5rem;
+      transition: width 0.7s cubic-bezier(.4,2,.6,1);
+    }
+    /* Animated Movie Countdown Styles */
+    .movie-countdown-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 1.1rem;
+    }
+    .countdown-movie-title {
+      font-size: 1.08rem;
+      color: #234C6A;
+      font-weight: 600;
+    }
+    .countdown-timer {
+      font-size: 1.18rem;
+      color: #1565c0;
+      font-weight: 700;
+      margin-top: 0.2rem;
+      letter-spacing: 0.04em;
+      display: flex;
+      gap: 0.5rem;
+    }
+    .countdown-nums {
+      display: inline-block;
+      min-width: 8.5rem;
+      font-variant-numeric: tabular-nums;
+      animation: countdownPop 0.7s cubic-bezier(.4,2,.6,1);
+    }
+    @keyframes countdownPop {
+      0% { transform: scale(1.2) rotate(-8deg); color: #ffb300; }
+      60% { transform: scale(1.08) rotate(6deg); color: #90caf9; }
+      100% { transform: scale(1) rotate(0); color: #1565c0; }
+    }
     /* Custom Pagination Styles */
     .custom-pagination {
       display: flex;
