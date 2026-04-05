@@ -1,5 +1,30 @@
 // --- Trailer Button Logic: Open YouTube Search in New Tab ---
 
+// Modern Footer Entertaining Quotes
+window.addEventListener('DOMContentLoaded', function() {
+  const footerQuoteElem = document.getElementById('footer-entertain-quote');
+  if (footerQuoteElem) {
+    const quotes = [
+      'Enjoy your movie night! 🍿 #MovieMatrix',
+      '“Movies touch our hearts and awaken our vision.”',
+      'Lights, camera, action! 🎬',
+      'May the popcorn be ever in your favor.',
+      'Keep calm and watch movies.',
+      'Every night is movie night!',
+      'And the Oscar goes to... You!',
+      'Escape reality, watch a movie.',
+      'Popcorn, friends, and great films!',
+      'Streaming happiness, one movie at a time.'
+    ];
+    function setRandomFooterQuote() {
+      const idx = Math.floor(Math.random() * quotes.length);
+      footerQuoteElem.textContent = quotes[idx];
+    }
+    setRandomFooterQuote();
+    setInterval(setRandomFooterQuote, 9000);
+  }
+});
+
 // Global confetti animation function for highly-rated shows
 function triggerConfetti() {
   if (document.querySelector('.confetti')) return; // Only one at a time
