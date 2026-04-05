@@ -1,3 +1,67 @@
+    /* Enhanced Search Bar Styles */
+    .search-bar-group {
+      display: flex;
+      align-items: stretch;
+      border-radius: 2.2rem;
+      box-shadow: 0 2px 12px 0 rgba(33,150,243,0.10);
+      background: linear-gradient(90deg, #e3f2fd 0%, #fff 100%);
+      padding: 0.18rem 0.18rem 0.18rem 0.7rem;
+      margin-bottom: 1.2rem;
+      border: 1.5px solid #90caf9;
+      transition: box-shadow 0.2s, border 0.2s;
+    }
+    .search-bar-group:focus-within {
+      box-shadow: 0 4px 24px 0 rgba(33,150,243,0.18);
+      border: 1.5px solid #2196f3;
+    }
+    .search-input {
+      border: none !important;
+      outline: none !important;
+      background: transparent !important;
+      font-size: 1.13rem;
+      padding: 0.7rem 1rem;
+      border-radius: 2rem 0 0 2rem;
+      color: #234C6A;
+      font-family: 'Poppins', Arial, sans-serif;
+      box-shadow: none !important;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .search-input:focus {
+      background: #e3f2fd !important;
+      color: #1565c0;
+    }
+    .search-btn {
+      border: none;
+      background: linear-gradient(90deg, #2196f3 0%, #8e24aa 100%);
+      color: #fff;
+      font-size: 1.25rem;
+      padding: 0 1.3rem;
+      border-radius: 0 2rem 2rem 0;
+      font-weight: 600;
+      box-shadow: 0 2px 8px 0 rgba(33,150,243,0.10);
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .search-btn:hover, .search-btn:focus {
+      background: linear-gradient(90deg, #8e24aa 0%, #2196f3 100%);
+      color: #ffe082;
+      box-shadow: 0 4px 16px 0 rgba(33,150,243,0.13);
+    }
+    .search-btn i {
+      pointer-events: none;
+    }
+    .search-warning-banner {
+      grid-column: 1 / -1;
+      justify-self: center;
+      align-self: start;
+      margin-top: 2.5rem;
+      margin-bottom: 2.5rem;
+      max-width: 28rem;
+      width: 100%;
+    }
     /* Modern Upcoming Movie Countdown Card */
     .modern-countdown-card {
       max-width: 26.1rem;
@@ -289,10 +353,29 @@
     }
 
 
+
 .display-data {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem 1.2rem;
+  justify-items: center;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .display-data {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .display-data {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .display-data {
+    grid-template-columns: 1fr;
+  }
 }
 
 
@@ -662,7 +745,8 @@
 }
 .moviematrix-title {
   display: flex;
-  gap: 0.04em;
+  align-items: center;
+  gap: 0.1rem;
 }
 .mm-letter {
   display: inline-block;

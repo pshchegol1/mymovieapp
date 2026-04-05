@@ -1,4 +1,21 @@
 // --- Trailer Button Logic: Open YouTube Search in New Tab ---
+
+// Global confetti animation function for highly-rated shows
+function triggerConfetti() {
+  if (document.querySelector('.confetti')) return; // Only one at a time
+  const confetti = document.createElement('div');
+  confetti.className = 'confetti';
+  for (let i = 0; i < 32; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = `hsl(${Math.random()*360},90%,60%)`;
+    piece.style.animationDelay = (Math.random() * 0.7) + 's';
+    confetti.appendChild(piece);
+  }
+  document.body.appendChild(confetti);
+  setTimeout(() => { confetti.remove(); }, 2000);
+}
 document.addEventListener('click', function(e) {
   if (e.target.classList.contains('watch-trailer-btn')) {
     const title = e.target.getAttribute('data-title');

@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <title>MovieMatrix</title>
+  <!-- Favicon: Movie clapperboard emoji as favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Ctext y='58' font-size='60'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -20,26 +22,24 @@
   <div class="row content">
     <div class="col-sm-3 sidenav">
 
-      <h1 class="movie-title m-5 text-center">
+      <h1 class="movie-title m-4 text-center">
         <span class="badge bg-primary moviematrix-badge">
           <span class="moviematrix-icon">
             <i class="fa-solid fa-film"></i>
           </span>
           <span class="moviematrix-title">
-            <span class="mm-letter">M</span><span class="mm-letter">o</span><span class="mm-letter">v</span><span class="mm-letter">i</span><span class="mm-letter">e</span><span class="mm-letter">M</span><span class="mm-letter">a</span><span class="mm-letter">t</span><span class="mm-letter">r</span><span class="mm-letter">i</span><span class="mm-letter">x</span>
+            <span class="mm-letter">M</span><span class="mm-letter">o</span><span class="mm-letter">v</span><span class="mm-letter">i</span><span class="mm-letter">e</span>
+            <span class="mm-letter">M</span><span class="mm-letter">a</span><span class="mm-letter">t</span><span class="mm-letter">r</span><span class="mm-letter">i</span><span class="mm-letter">x</span>
           </span>
         </span>
-        <div class="now-playing-marquee-wrap">
-          <div class="now-playing-label"><i class="fa-solid fa-bolt"></i> Now Playing</div>
-          <div class="now-playing-marquee" id="nowPlayingMarquee">
-            <span>Loading trending movies...</span>
-          </div>
-        </div>
+        
       </h1>
       <form id="search-form">
-        <div class="input-group">
-          <input type="text" class="form-control search-input bg-light" required placeholder="Search Movie..">
-          <button id="searchButton" type="submit" class="btn btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <div class="search-bar-group">
+          <input type="text" class="search-input" required placeholder="Search for a movie..." aria-label="Search for a movie">
+          <button id="searchButton" type="submit" class="search-btn" aria-label="Search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
         </div>
       </form>
       <div class="sideCard">
