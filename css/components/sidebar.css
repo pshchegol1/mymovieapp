@@ -1,0 +1,95 @@
+.widget {
+  position: relative;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow: hidden;
+}
+.widget::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    hsl(var(--widget-hue, var(--h-blue)) / 0.10) 0%,
+    transparent 60%);
+}
+.widget--countdown { --widget-hue: var(--h-blue); }
+.widget--fact      { --widget-hue: var(--h-amber); }
+.widget--quote     { --widget-hue: var(--h-violet); }
+
+.widget__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  position: relative;
+}
+.widget__header > i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  background: hsl(var(--widget-hue, var(--h-blue)) / 0.18);
+  color: hsl(var(--widget-hue, var(--h-blue)));
+  font-size: var(--fs-base);
+}
+.widget__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.widget__body {
+  position: relative;
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  line-height: var(--lh-body);
+}
+
+.widget--quote .widget__body {
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.countdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border-hairline);
+}
+.countdown-item:last-child { border-bottom: none; }
+
+.countdown-item__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+.countdown-item__time {
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--h-blue));
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.02em;
+}
+.countdown-item__time--live {
+  color: var(--color-success);
+}
+.countdown-item__bar {
+  height: 4px;
+  background: hsl(var(--n-200));
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.countdown-item__fill {
+  height: 100%;
+  background: var(--grad-cta);
+  border-radius: var(--radius-pill);
+  transition: width var(--dur-slow) var(--ease-out-quart);
+}

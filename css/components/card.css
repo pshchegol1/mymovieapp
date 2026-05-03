@@ -1,0 +1,90 @@
+.show-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0;
+  animation: fadeUp var(--dur-base) var(--ease-out-quart) forwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+  transition: transform var(--dur-fast) var(--ease-spring),
+              box-shadow var(--dur-fast) var(--ease-standard);
+  padding: 0;
+  width: 100%;
+}
+.show-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-3), var(--shadow-glow);
+}
+.show-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px hsl(var(--h-blue) / 0.3), var(--shadow-3);
+}
+
+.show-card__media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: hsl(var(--n-100));
+  overflow: hidden;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+.show-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.show-card__rating {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: hsl(var(--n-900) / 0.55);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+          backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid hsl(var(--n-0) / 0.25);
+  border-radius: var(--radius-pill);
+  color: white;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+.show-card__rating .fa-star { color: hsl(var(--h-amber)); }
+
+.show-card__body {
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+@media (min-width: 600px) {
+  .show-card__body { padding: var(--space-4); }
+}
+.show-card__title {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+@media (min-width: 600px) {
+  .show-card__title { font-size: var(--fs-md); }
+}
+.show-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: auto;
+}
+.show-card__premiered {
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+}

@@ -1,0 +1,22 @@
+.glass {
+  --glass-bg: var(--color-surface);
+  --glass-blur: var(--blur-md);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+          backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--color-border-glass);
+  box-shadow: var(--shadow-2), var(--shadow-glow);
+  border-radius: var(--radius-md);
+}
+.glass--strong {
+  --glass-bg: var(--color-surface-strong);
+  --glass-blur: var(--blur-lg);
+}
+.glass--soft {
+  --glass-bg: var(--color-surface-soft);
+  --glass-blur: var(--blur-sm);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: hsl(var(--n-0) / 0.92); }
+}

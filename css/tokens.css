@@ -1,0 +1,113 @@
+:root {
+  --h-blue: 210 80% 56%;
+  --h-violet: 282 56% 47%;
+  --h-amber: 38 100% 60%;
+  --h-cyan: 188 86% 58%;
+  --h-rose: 340 82% 66%;
+  --h-indigo: 238 76% 64%;
+
+  --n-0: 0 0% 100%;
+  --n-50: 220 30% 98%;
+  --n-100: 220 24% 95%;
+  --n-200: 220 20% 90%;
+  --n-300: 220 16% 80%;
+  --n-500: 220 12% 55%;
+  --n-700: 220 22% 28%;
+  --n-900: 220 30% 14%;
+
+  --color-bg: hsl(var(--n-50));
+  --color-surface: hsl(var(--n-0) / 0.55);
+  --color-surface-strong: hsl(var(--n-0) / 0.72);
+  --color-surface-soft: hsl(var(--n-0) / 0.40);
+  --color-border-glass: hsl(var(--n-0) / 0.65);
+  --color-border-hairline: hsl(var(--n-300) / 0.55);
+  --color-text: hsl(var(--n-900));
+  --color-text-muted: hsl(var(--n-700));
+  --color-text-soft: hsl(var(--n-500));
+  --color-accent: hsl(var(--h-blue));
+  --color-accent-2: hsl(var(--h-violet));
+  --color-warn: hsl(var(--h-amber));
+  --color-success: hsl(150 60% 45%);
+
+  --grad-cta: linear-gradient(135deg, hsl(var(--h-blue)) 0%, hsl(var(--h-violet)) 100%);
+  --grad-cta-hover: linear-gradient(135deg, hsl(var(--h-violet)) 0%, hsl(var(--h-blue)) 100%);
+  --grad-warm: linear-gradient(135deg, hsl(var(--h-amber)) 0%, hsl(var(--h-rose)) 100%);
+
+  --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --fs-xs: 0.8rem;
+  --fs-sm: 0.9rem;
+  --fs-base: 1rem;
+  --fs-md: 1.125rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.563rem;
+  --fs-2xl: 1.953rem;
+  --fs-3xl: 2.441rem;
+  --fs-4xl: 3.052rem;
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.3;
+  --lh-body: 1.55;
+
+  --fw-regular: 400;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.04em;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  --blur-sm: blur(8px) saturate(140%);
+  --blur-md: blur(16px) saturate(150%);
+  --blur-lg: blur(24px) saturate(160%);
+  --blur-xl: blur(40px) saturate(170%);
+
+  --shadow-1:
+    0 1px 2px hsl(var(--n-900) / 0.04),
+    0 2px 6px hsl(var(--n-900) / 0.06);
+  --shadow-2:
+    0 1px 2px hsl(var(--n-900) / 0.05),
+    0 6px 16px hsl(var(--n-900) / 0.08),
+    0 12px 32px hsl(var(--h-blue) / 0.08);
+  --shadow-3:
+    0 1px 2px hsl(var(--n-900) / 0.06),
+    0 12px 24px hsl(var(--n-900) / 0.10),
+    0 24px 48px hsl(var(--h-violet) / 0.12);
+  --shadow-glow:
+    0 0 0 1px hsl(var(--n-0) / 0.6) inset,
+    0 1px 0 hsl(var(--n-0) / 0.9) inset;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  --dur-instant: 80ms;
+  --dur-fast: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+  --dur-slower: 640ms;
+
+  --z-base: 0;
+  --z-content: 1;
+  --z-sticky: 100;
+  --z-header: 200;
+  --z-overlay: 800;
+  --z-modal: 900;
+  --z-toast: 1000;
+}
