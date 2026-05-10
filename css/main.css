@@ -10,6 +10,14 @@
 @import url("./components/sidebar.css");
 @import url("./components/carousel.css");
 @import url("./components/card.css");
+@import url("./components/genre-filter.css");
 @import url("./components/pagination.css");
 @import url("./components/modal.css");
 @import url("./components/loader.css");
+@import url("./components/nav.css");
+@import url("./components/toast.css");
+@import url("./components/category-tabs.css");
+@import url("./components/sort-bar.css");
+@import url("./components/watchlist.css");
+@import url("./components/modal-sections.css");
+@import url("./components/schedule.css");

@@ -1,0 +1,48 @@
+.show-card__heart {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-pill);
+  background: hsl(var(--n-900) / 0.5);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+          backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid hsl(var(--n-0) / 0.25);
+  color: white;
+  cursor: pointer;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-spring),
+              background var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+.show-card:hover .show-card__heart,
+.show-card:focus-within .show-card__heart,
+.show-card__heart.is-on,
+.show-card__heart:focus-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.show-card__heart:hover { background: hsl(var(--h-rose) / 0.85); }
+.show-card__heart.is-on { background: hsl(var(--h-rose)); color: white; }
+
+.show-card__myrate {
+  position: absolute;
+  bottom: var(--space-2);
+  left: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: hsl(var(--h-amber) / 0.92);
+  color: hsl(var(--n-900));
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}

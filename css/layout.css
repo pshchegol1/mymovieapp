@@ -5,7 +5,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
   padding: var(--space-3) clamp(var(--space-3), 3vw, var(--space-6));
   background: hsl(var(--n-0) / 0.62);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
@@ -15,6 +16,7 @@
   border-radius: 0;
   box-shadow: 0 4px 16px hsl(var(--n-900) / 0.06);
 }
+.site-header .search { flex: 0 1 22rem; min-width: 0; }
 
 .brand {
   display: inline-flex;
@@ -78,7 +80,7 @@
   flex-direction: column;
   gap: var(--space-5);
 }
-.shows__header { display: flex; align-items: baseline; justify-content: space-between; }
+.shows__header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
 .shows__title {
   font-size: clamp(var(--fs-xl), 3.5vw, var(--fs-2xl));
   background: var(--grad-cta);

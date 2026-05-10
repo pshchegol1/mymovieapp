@@ -17,10 +17,27 @@
   <div class="bg-mesh" aria-hidden="true"></div>
 
   <header class="site-header">
-    <a class="brand" href="/">
+    <a class="brand" href="#/">
       <span class="brand__icon"><i class="fa-solid fa-film" aria-hidden="true"></i></span>
       <span class="brand__name">MovieMatrix</span>
     </a>
+
+    <nav class="primary-nav" aria-label="Primary">
+      <a class="primary-nav__link" href="#/" data-nav="home">
+        <i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span>
+      </a>
+      <a class="primary-nav__link" href="#/watchlist" data-nav="watchlist">
+        <i class="fa-solid fa-heart" aria-hidden="true"></i><span>My list</span>
+        <span class="primary-nav__badge" data-watchlist-count hidden></span>
+      </a>
+      <a class="primary-nav__link" href="#/recent" data-nav="recent">
+        <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Recent</span>
+      </a>
+      <a class="primary-nav__link" href="#/schedule" data-nav="schedule">
+        <i class="fa-solid fa-calendar-day" aria-hidden="true"></i><span>Tonight</span>
+      </a>
+    </nav>
+
     <form class="search" role="search" data-search-form>
       <label class="sr-only" for="search-input">Search shows</label>
       <input id="search-input" class="search__input" type="search"
@@ -30,6 +47,10 @@
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
       </button>
     </form>
+
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle theme">
+      <i class="fa-solid fa-moon" aria-hidden="true"></i>
+    </button>
   </header>
 
   <main class="layout">
@@ -61,7 +82,7 @@
 
     <section class="main-content" aria-label="Shows">
       <section class="carousel glass glass--strong" aria-label="Trending"
-               data-carousel data-autoplay="3500">
+               data-carousel data-autoplay="3500" data-view="home">
         <div class="carousel__track" data-carousel-track></div>
         <div class="carousel__controls">
           <button class="carousel__btn" type="button" data-carousel-prev aria-label="Previous slide">
@@ -74,12 +95,51 @@
         </div>
       </section>
 
-      <section class="shows" aria-labelledby="shows-title">
+      <section class="schedule" data-view="schedule" hidden aria-labelledby="sched-title">
+        <header class="shows__header">
+          <h2 id="sched-title" class="shows__title">On tonight</h2>
+          <span class="shows__sub" data-schedule-status></span>
+        </header>
+        <div class="schedule__list" data-schedule-list></div>
+      </section>
+
+      <section class="shows" data-view="home" aria-labelledby="shows-title">
         <header class="shows__header">
           <h2 id="shows-title" class="shows__title">TV shows</h2>
         </header>
+        <div class="cat-tabs" data-cat-tabs role="tablist" aria-label="Browse"></div>
+        <div class="genre-filter" data-genre-filter role="toolbar" aria-label="Filter by genre"></div>
+        <div class="sort-bar" data-sort-bar>
+          <label class="sort-bar__field">
+            <span>Sort</span>
+            <select data-sort-select></select>
+          </label>
+          <label class="sort-bar__field">
+            <span>Year</span>
+            <select data-year-select></select>
+          </label>
+          <span class="sort-bar__count" data-result-count></span>
+        </div>
         <div class="shows__grid" data-shows-grid></div>
         <nav class="pagination" aria-label="Pagination" data-pagination></nav>
+      </section>
+
+      <section class="shows" data-view="watchlist" hidden aria-labelledby="wl-title">
+        <header class="shows__header">
+          <h2 id="wl-title" class="shows__title">My list</h2>
+          <span class="shows__sub" data-watchlist-meta></span>
+        </header>
+        <div class="shows__grid" data-watchlist-grid></div>
+      </section>
+
+      <section class="shows" data-view="recent" hidden aria-labelledby="rc-title">
+        <header class="shows__header">
+          <h2 id="rc-title" class="shows__title">Recently viewed</h2>
+          <button type="button" class="btn btn--ghost btn--sm" data-recent-clear>
+            <i class="fa-solid fa-trash"></i> Clear
+          </button>
+        </header>
+        <div class="shows__grid" data-recent-grid></div>
       </section>
     </section>
   </main>

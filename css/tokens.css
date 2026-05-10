@@ -111,3 +111,69 @@
   --z-modal: 900;
   --z-toast: 1000;
 }
+
+[data-theme="dark"] {
+  /* Override 'white-glass' base so all hsl(var(--n-0) / X) lookups produce
+     a dark translucent surface, while the dark-overlay/text scale stays dark. */
+  --n-0: 220 18% 16%;
+  --n-50: 220 22% 10%;
+  --n-100: 220 16% 22%;
+  --n-200: 220 14% 28%;
+  --n-300: 220 12% 36%;
+
+  --color-bg: hsl(220 24% 7%);
+  --color-surface: hsl(220 18% 16% / 0.62);
+  --color-surface-strong: hsl(220 18% 18% / 0.82);
+  --color-surface-soft: hsl(220 18% 16% / 0.42);
+  --color-border-glass: hsl(220 18% 60% / 0.22);
+  --color-border-hairline: hsl(220 18% 50% / 0.28);
+  --color-text: hsl(220 30% 96%);
+  --color-text-muted: hsl(220 14% 78%);
+  --color-text-soft: hsl(220 10% 64%);
+
+  --shadow-1:
+    0 1px 2px hsl(0 0% 0% / 0.4),
+    0 2px 6px hsl(0 0% 0% / 0.5);
+  --shadow-2:
+    0 2px 6px hsl(0 0% 0% / 0.45),
+    0 10px 22px hsl(0 0% 0% / 0.55);
+  --shadow-3:
+    0 4px 10px hsl(0 0% 0% / 0.55),
+    0 20px 40px hsl(0 0% 0% / 0.6);
+  --shadow-glow:
+    0 0 0 1px hsl(220 18% 60% / 0.18) inset,
+    0 1px 0 hsl(220 18% 70% / 0.18) inset;
+}
+
+/* Dark theme component-level overrides where literal n-scale colors are used. */
+[data-theme="dark"] body { color-scheme: dark; }
+[data-theme="dark"] .site-header { background: hsl(220 22% 10% / 0.72); border-bottom-color: var(--color-border-glass); }
+[data-theme="dark"] .site-footer { background: hsl(220 22% 10% / 0.72); border-top-color: var(--color-border-glass); }
+[data-theme="dark"] .show-card__rating,
+[data-theme="dark"] .show-card__heart {
+  background: hsl(0 0% 0% / 0.55);
+  border-color: hsl(0 0% 100% / 0.18);
+}
+[data-theme="dark"] .modal__close {
+  background: hsl(220 18% 22% / 0.6);
+  color: var(--color-text-muted);
+}
+[data-theme="dark"] .modal__close:hover { background: hsl(220 18% 30%); color: var(--color-text); }
+[data-theme="dark"] .btn--accent {
+  background: hsl(var(--h-amber) / 0.22);
+  border-color: hsl(var(--h-amber) / 0.5);
+  color: hsl(38 100% 70%);
+}
+[data-theme="dark"] .btn--accent:hover {
+  background: hsl(var(--h-amber) / 0.32);
+  color: hsl(38 100% 80%);
+}
+[data-theme="dark"] .show-card__myrate {
+  background: hsl(var(--h-amber) / 0.92);
+  color: hsl(220 30% 10%);
+}
+[data-theme="dark"] .episode__num,
+[data-theme="dark"] .episodes__tab.is-active,
+[data-theme="dark"] .cat-tab.is-active,
+[data-theme="dark"] .genre-pill[aria-pressed="true"],
+[data-theme="dark"] .primary-nav__link.is-active { color: white; }

@@ -1,12 +1,15 @@
-import { searchShows, fetchShows } from '../api.js';
+import { searchShows } from '../api.js';
 import * as grid from './grid.js';
 
 let formEl, inputEl;
+let onSearchCb = null;
+let onResetCb = null;
 
 async function onSubmit(e) {
   e.preventDefault();
   const query = inputEl.value.trim();
   if (!query) return;
+  onSearchCb?.();
   grid.showLoading();
   try {
     const results = await searchShows(query);
@@ -18,21 +21,14 @@ async function onSubmit(e) {
   }
 }
 
-async function onReset() {
-  inputEl.value = '';
-  grid.showLoading();
-  try {
-    const shows = await fetchShows(1);
-    grid.setShows(shows);
-  } catch (err) {
-    grid.showError('Failed to load shows.');
-  }
-}
+export function init({ form, input, onSearch, onReset }) {
+  formEl = form;
+  inputEl = input;
+  onSearchCb = onSearch || null;
+  onResetCb = onReset || null;
 
-export function init({ form, input }) {
-  formEl = form; inputEl = input;
   formEl.addEventListener('submit', onSubmit);
-  inputEl.addEventListener('search', (e) => {
-    if (inputEl.value === '') onReset();
+  inputEl.addEventListener('search', () => {
+    if (inputEl.value === '') onResetCb?.();
   });
 }

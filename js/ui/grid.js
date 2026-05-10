@@ -2,6 +2,8 @@ import { $, escapeHtml } from '../util/dom.js';
 import { showImage } from '../api.js';
 import { gridSkeleton } from './skeleton.js';
 import * as modal from './modal.js';
+import { isInWatchlist, toggleWatchlist, getRating, subscribe } from '../storage.js';
+import * as toast from './toast.js';
 
 let gridEl, paginationEl;
 let pool = [];
@@ -22,6 +24,8 @@ function renderCard(show, idx) {
   const ratingStr = (rating === null || rating === undefined) ? '—' : rating.toFixed(1);
   const genres = (show.genres && show.genres.length) ? show.genres : ['Unknown'];
   const premiered = show.premiered ? new Date(show.premiered).getFullYear() : '—';
+  const inList = isInWatchlist(show.id);
+  const myRating = getRating(show.id);
 
   return `
     <article class="show-card glass" tabindex="0" role="button"
@@ -31,6 +35,12 @@ function renderCard(show, idx) {
         <img class="show-card__img" src="${escapeHtml(img)}" alt="${escapeHtml(show.name)}"
              loading="lazy" onerror="this.onerror=null;this.src='./img/noimg.jpg';">
         <span class="show-card__rating"><i class="fa-solid fa-star"></i> ${escapeHtml(ratingStr)}</span>
+        <button type="button" class="show-card__heart${inList ? ' is-on' : ''}" data-watch-toggle
+                aria-label="${inList ? 'Remove from your list' : 'Add to your list'}"
+                aria-pressed="${inList}">
+          <i class="fa-${inList ? 'solid' : 'regular'} fa-heart" aria-hidden="true"></i>
+        </button>
+        ${myRating ? `<span class="show-card__myrate" title="Your rating"><i class="fa-solid fa-star"></i> ${myRating}</span>` : ''}
       </div>
       <div class="show-card__body">
         <h3 class="show-card__title">${escapeHtml(show.name)}</h3>
@@ -40,12 +50,15 @@ function renderCard(show, idx) {
     </article>`;
 }
 
-function renderEmpty(query) {
+function renderEmpty(query, opts = {}) {
+  const icon = opts.icon || 'fa-solid fa-magnifying-glass';
+  const title = opts.title || `No shows found${query ? ` for "${escapeHtml(query)}"` : ''}`;
+  const sub = opts.sub || 'Try a different title.';
   return `
     <div class="empty-state">
-      <i class="fa-solid fa-magnifying-glass empty-state__icon" aria-hidden="true"></i>
-      <h3 class="empty-state__title">No shows found${query ? ` for &ldquo;${escapeHtml(query)}&rdquo;` : ''}</h3>
-      <p>Try a different title.</p>
+      <i class="${icon} empty-state__icon" aria-hidden="true"></i>
+      <h3 class="empty-state__title">${title}</h3>
+      <p>${sub}</p>
     </div>`;
 }
 
@@ -77,11 +90,47 @@ function renderPage() {
   if (currentPage > totalPages) currentPage = totalPages;
   const start = (currentPage - 1) * perPage;
   activeShows = pool.slice(start, start + perPage);
+  if (activeShows.length === 0) {
+    gridEl.innerHTML = renderEmpty();
+    if (paginationEl) paginationEl.innerHTML = '';
+    return;
+  }
   gridEl.innerHTML = activeShows.map((s, i) => renderCard(s, i)).join('');
   renderPagination(totalPages);
 }
 
+function refreshCardStates() {
+  if (!gridEl) return;
+  gridEl.querySelectorAll('[data-show-card]').forEach((card) => {
+    const idx = Number(card.dataset.showIdx);
+    const show = activeShows[idx];
+    if (!show) return;
+    const inList = isInWatchlist(show.id);
+    const heart = card.querySelector('[data-watch-toggle]');
+    if (heart) {
+      heart.classList.toggle('is-on', inList);
+      heart.setAttribute('aria-pressed', String(inList));
+      heart.setAttribute('aria-label', inList ? 'Remove from your list' : 'Add to your list');
+      heart.innerHTML = `<i class="fa-${inList ? 'solid' : 'regular'} fa-heart" aria-hidden="true"></i>`;
+    }
+  });
+}
+
 function onCardActivate(e) {
+  const heart = e.target.closest('[data-watch-toggle]');
+  if (heart) {
+    e.preventDefault();
+    e.stopPropagation();
+    const card = heart.closest('[data-show-card]');
+    const idx = Number(card.dataset.showIdx);
+    const show = activeShows[idx];
+    if (!show) return;
+    const added = toggleWatchlist(show);
+    toast.show(added ? `Added "${show.name}" to your list` : 'Removed from your list',
+      { icon: added ? 'fa-solid fa-heart' : 'fa-solid fa-heart-crack', tone: added ? 'success' : 'info' });
+    return;
+  }
+
   const card = e.target.closest('[data-show-card]');
   if (!card) return;
   if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
@@ -112,6 +161,7 @@ export function init({ grid, pagination }) {
   gridEl.addEventListener('click', onCardActivate);
   gridEl.addEventListener('keydown', onCardActivate);
   paginationEl.addEventListener('click', onPaginationClick);
+  subscribe(refreshCardStates);
 }
 
 export function setShows(shows) {
@@ -125,8 +175,8 @@ export function showLoading() {
   if (paginationEl) paginationEl.innerHTML = '';
 }
 
-export function showEmpty(query) {
-  if (gridEl) gridEl.innerHTML = renderEmpty(query);
+export function showEmpty(query, opts) {
+  if (gridEl) gridEl.innerHTML = renderEmpty(query, opts);
   if (paginationEl) paginationEl.innerHTML = '';
 }
 
