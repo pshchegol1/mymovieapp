@@ -1,0 +1,11 @@
+{
+  "name": "mymovieapp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "python3 -m http.server 8765"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
+  }
+}
