@@ -50,27 +50,46 @@
 
 /* Rating stars */
 .rate {
+  --rate-empty: hsl(220 15% 45% / 0.3);
+  --rate-on: hsl(38 100% 50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  flex-wrap: wrap;
+}
+.rate__stars {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  flex-wrap: wrap;
 }
 .rate__star {
   display: inline-flex;
-  width: 1.85rem;
-  height: 1.85rem;
+  /* 10 stars must fit the modal on a 360px phone */
+  width: clamp(1.6rem, 7.8vw, 2.1rem);
+  height: clamp(1.6rem, 7.8vw, 2.1rem);
   align-items: center;
   justify-content: center;
-  color: hsl(var(--n-300));
+  font-size: clamp(1rem, 5vw, 1.2rem);
+  border-radius: var(--radius-pill);
+  color: var(--rate-empty);
   transition: color var(--dur-fast) var(--ease-standard),
               transform var(--dur-fast) var(--ease-spring);
 }
-.rate__star:hover { transform: scale(1.15); }
-.rate__star.is-on { color: hsl(var(--h-amber)); }
+.rate__star.is-on { color: var(--rate-on); }
+/* Hover preview: light up every star up to the hovered one. */
+.rate__stars:hover .rate__star { color: var(--rate-on); }
+.rate__stars:hover .rate__star:hover ~ .rate__star { color: var(--rate-empty); }
+.rate__star:hover { transform: scale(1.18); }
+.rate__value {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.rate__value strong { font-size: var(--fs-md); color: var(--color-text); }
+.rate__value--empty { color: var(--color-text-soft); }
 .rate__clear {
-  margin-left: var(--space-2);
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 2rem;
+  height: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;

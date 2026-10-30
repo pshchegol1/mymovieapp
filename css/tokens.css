@@ -182,3 +182,4 @@
 [data-theme="dark"] .cat-tab.is-active,
 [data-theme="dark"] .genre-pill[aria-pressed="true"],
 [data-theme="dark"] .primary-nav__link.is-active { color: white; }
+[data-theme="dark"] .rate { --rate-empty: hsl(220 20% 80% / 0.28); --rate-on: hsl(var(--h-amber)); }

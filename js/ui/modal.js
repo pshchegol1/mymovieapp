@@ -37,14 +37,17 @@ function onKey(e) {
 }
 
 function ratingStars(value) {
-  let out = '<div class="rate" role="radiogroup" aria-label="Your rating">';
+  let out = '<div class="rate"><div class="rate__stars" role="radiogroup" aria-label="Your rating">';
   for (let i = 1; i <= 10; i++) {
-    const filled = i <= value;
-    out += `<button type="button" class="rate__star${filled ? ' is-on' : ''}" role="radio" aria-checked="${filled}" data-rate="${i}" aria-label="${i} out of 10">
-      <i class="fa-${filled ? 'solid' : 'regular'} fa-star" aria-hidden="true"></i>
+    out += `<button type="button" class="rate__star${i <= value ? ' is-on' : ''}" role="radio" aria-checked="${i === value}" data-rate="${i}" aria-label="${i} out of 10">
+      <i class="fa-solid fa-star" aria-hidden="true"></i>
     </button>`;
   }
-  out += `<button type="button" class="rate__clear" data-rate="0" aria-label="Clear rating"><i class="fa-solid fa-rotate-left"></i></button>`;
+  out += '</div>';
+  out += value
+    ? `<span class="rate__value"><strong>${value}</strong>/10</span>
+       <button type="button" class="rate__clear" data-rate="0" aria-label="Clear rating"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>`
+    : '<span class="rate__value rate__value--empty">Tap a star to rate</span>';
   out += '</div>';
   return out;
 }
