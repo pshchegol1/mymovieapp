@@ -2,6 +2,10 @@ const routes = new Map();
 let currentRoute = null;
 let notFoundHandler = null;
 
+function decode(s) {
+  try { return decodeURIComponent(s.replace(/\+/g, ' ')); } catch { return s; }
+}
+
 function parse(hash) {
   const raw = (hash || '').replace(/^#\/?/, '');
   if (!raw) return { path: '', parts: [], query: {} };
@@ -12,7 +16,7 @@ function parse(hash) {
     for (const pair of qs.split('&')) {
       if (!pair) continue;
       const [k, v = ''] = pair.split('=');
-      query[decodeURIComponent(k)] = decodeURIComponent(v);
+      query[decode(k)] = decode(v);
     }
   }
   return { path: pathPart, parts, query };
@@ -25,7 +29,7 @@ function match(parts) {
     const params = {};
     let ok = true;
     for (let i = 0; i < segs.length; i++) {
-      if (segs[i].startsWith(':')) params[segs[i].slice(1)] = decodeURIComponent(parts[i]);
+      if (segs[i].startsWith(':')) params[segs[i].slice(1)] = decode(parts[i]);
       else if (segs[i] !== parts[i]) { ok = false; break; }
     }
     if (ok) return { handler, params };
@@ -53,5 +57,9 @@ export function start() {
 export function go(path) {
   if (location.hash === `#${path}`) resolve();
   else location.hash = path;
+}
+// Change the URL (adding a history entry) without running the route handler.
+export function update(path) {
+  if (location.hash !== `#${path}`) history.pushState(null, '', `#${path}`);
 }
 export function current() { return currentRoute; }

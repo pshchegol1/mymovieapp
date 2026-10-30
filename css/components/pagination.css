@@ -42,6 +42,17 @@
   box-shadow: var(--shadow-1);
   cursor: default;
 }
+.pagination__gap {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 2.5rem;
+  padding-bottom: 0.6rem;
+  color: var(--color-text-soft);
+  font-weight: var(--fw-semibold);
+  user-select: none;
+}
 .pagination__btn[disabled] {
   opacity: 0.4;
   cursor: not-allowed;

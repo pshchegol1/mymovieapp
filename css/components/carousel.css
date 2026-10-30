@@ -23,6 +23,7 @@
   background: hsl(var(--n-100));
   overflow: hidden;
   border-radius: calc(var(--radius-lg) - 6px);
+  cursor: pointer;
 }
 .carousel__img {
   position: absolute;
@@ -85,6 +86,7 @@
   text-shadow: 0 1px 8px hsl(var(--n-900) / 0.5);
   max-width: 38rem;
 }
+.carousel__open { margin-top: var(--space-1); }
 
 .carousel__controls {
   position: absolute;
@@ -150,6 +152,7 @@
 }
 @media (max-width: 480px) {
   .carousel__slide { aspect-ratio: 4 / 3; }
+  .carousel__open { display: none; }
   .carousel__btn { width: 2rem; height: 2rem; }
   .carousel__indicators { padding: 0 var(--space-1); }
   .carousel__indicator { width: 6px; height: 6px; }

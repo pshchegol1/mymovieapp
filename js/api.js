@@ -41,8 +41,17 @@ export async function fetchSeasonEpisodes(seasonId) {
   return getJSON(`${BASE}/seasons/${seasonId}/episodes`);
 }
 
+// YYYY-MM-DD in the user's local time zone, `offsetDays` from today.
+// (toISOString() would give the UTC date, which is already tomorrow on US evenings.)
+export function localDate(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 export async function fetchSchedule(country = 'US', date = null) {
-  const d = date || new Date().toISOString().slice(0, 10);
+  const d = date || localDate();
   return getJSON(`${BASE}/schedule?country=${encodeURIComponent(country)}&date=${d}`);
 }
 

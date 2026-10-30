@@ -1,54 +1,13 @@
-import { $, escapeHtml } from '../util/dom.js';
-import { showImage } from '../api.js';
+import { escapeHtml } from '../util/dom.js';
 import { gridSkeleton } from './skeleton.js';
-import * as modal from './modal.js';
-import { isInWatchlist, toggleWatchlist, getRating, subscribe } from '../storage.js';
-import * as toast from './toast.js';
+import { renderCard, syncHeart, onCardEvent } from './show-card.js';
+import { isInWatchlist, subscribe } from '../storage.js';
 
 let gridEl, paginationEl;
 let pool = [];
 let currentPage = 1;
-const perPage = 8;
+const perPage = 12;
 let activeShows = [];
-
-function badgesFor(genres) {
-  const variants = ['', '--violet', '--amber', '--cyan', '--rose'];
-  return (genres || []).slice(0, 3).map((g, i) =>
-    `<span class="badge badge${variants[i % variants.length]}">${escapeHtml(g)}</span>`
-  ).join('');
-}
-
-function renderCard(show, idx) {
-  const img = showImage(show, 'medium');
-  const rating = show.rating?.average;
-  const ratingStr = (rating === null || rating === undefined) ? '—' : rating.toFixed(1);
-  const genres = (show.genres && show.genres.length) ? show.genres : ['Unknown'];
-  const premiered = show.premiered ? new Date(show.premiered).getFullYear() : '—';
-  const inList = isInWatchlist(show.id);
-  const myRating = getRating(show.id);
-
-  return `
-    <article class="show-card glass" tabindex="0" role="button"
-             aria-label="${escapeHtml(show.name)} — open details"
-             data-show-card data-show-idx="${idx}" style="--i: ${idx}">
-      <div class="show-card__media">
-        <img class="show-card__img" src="${escapeHtml(img)}" alt="${escapeHtml(show.name)}"
-             loading="lazy" onerror="this.onerror=null;this.src='./img/noimg.jpg';">
-        <span class="show-card__rating"><i class="fa-solid fa-star"></i> ${escapeHtml(ratingStr)}</span>
-        <button type="button" class="show-card__heart${inList ? ' is-on' : ''}" data-watch-toggle
-                aria-label="${inList ? 'Remove from your list' : 'Add to your list'}"
-                aria-pressed="${inList}">
-          <i class="fa-${inList ? 'solid' : 'regular'} fa-heart" aria-hidden="true"></i>
-        </button>
-        ${myRating ? `<span class="show-card__myrate" title="Your rating"><i class="fa-solid fa-star"></i> ${myRating}</span>` : ''}
-      </div>
-      <div class="show-card__body">
-        <h3 class="show-card__title">${escapeHtml(show.name)}</h3>
-        <span class="show-card__premiered">${escapeHtml(premiered)}</span>
-        <div class="show-card__meta">${badgesFor(genres)}</div>
-      </div>
-    </article>`;
-}
 
 function renderEmpty(query, opts = {}) {
   const icon = opts.icon || 'fa-solid fa-magnifying-glass';
@@ -62,6 +21,21 @@ function renderEmpty(query, opts = {}) {
     </div>`;
 }
 
+// First, last, and current ±1 pages; null marks a gap ("…").
+// Gaps of a single page are filled in, since "…" would be no shorter.
+function pageWindow(current, total) {
+  const pages = [];
+  let prev = 0;
+  for (let p = 1; p <= total; p++) {
+    if (p !== 1 && p !== total && Math.abs(p - current) > 1) continue;
+    if (p - prev === 2) pages.push(prev + 1);
+    else if (p - prev > 2) pages.push(null);
+    pages.push(p);
+    prev = p;
+  }
+  return pages;
+}
+
 function renderPagination(totalPages) {
   if (!paginationEl) return;
   if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
@@ -71,16 +45,19 @@ function renderPagination(totalPages) {
       `data-page="${page}"`,
       opts.current ? 'aria-current="page"' : '',
       opts.disabled ? 'disabled' : '',
+      opts.label ? `aria-label="${opts.label}"` : '',
     ].filter(Boolean).join(' ');
     return `<li><button type="button" class="pagination__btn" ${attrs}>${label}</button></li>`;
   };
 
   let out = '<ul class="pagination__list">';
-  out += btn('<i class="fa-solid fa-chevron-left"></i>', 'prev', { disabled: currentPage === 1 });
-  for (let i = 1; i <= totalPages; i++) {
-    out += btn(String(i), i, { current: i === currentPage });
+  out += btn('<i class="fa-solid fa-chevron-left"></i>', 'prev', { disabled: currentPage === 1, label: 'Previous page' });
+  for (const p of pageWindow(currentPage, totalPages)) {
+    out += p === null
+      ? '<li><span class="pagination__gap" aria-hidden="true">…</span></li>'
+      : btn(String(p), p, { current: p === currentPage, label: `Page ${p}` });
   }
-  out += btn('<i class="fa-solid fa-chevron-right"></i>', 'next', { disabled: currentPage === totalPages });
+  out += btn('<i class="fa-solid fa-chevron-right"></i>', 'next', { disabled: currentPage === totalPages, label: 'Next page' });
   out += '</ul>';
   paginationEl.innerHTML = out;
 }
@@ -105,39 +82,9 @@ function refreshCardStates() {
     const idx = Number(card.dataset.showIdx);
     const show = activeShows[idx];
     if (!show) return;
-    const inList = isInWatchlist(show.id);
     const heart = card.querySelector('[data-watch-toggle]');
-    if (heart) {
-      heart.classList.toggle('is-on', inList);
-      heart.setAttribute('aria-pressed', String(inList));
-      heart.setAttribute('aria-label', inList ? 'Remove from your list' : 'Add to your list');
-      heart.innerHTML = `<i class="fa-${inList ? 'solid' : 'regular'} fa-heart" aria-hidden="true"></i>`;
-    }
+    if (heart) syncHeart(heart, isInWatchlist(show.id));
   });
-}
-
-function onCardActivate(e) {
-  const heart = e.target.closest('[data-watch-toggle]');
-  if (heart) {
-    e.preventDefault();
-    e.stopPropagation();
-    const card = heart.closest('[data-show-card]');
-    const idx = Number(card.dataset.showIdx);
-    const show = activeShows[idx];
-    if (!show) return;
-    const added = toggleWatchlist(show);
-    toast.show(added ? `Added "${show.name}" to your list` : 'Removed from your list',
-      { icon: added ? 'fa-solid fa-heart' : 'fa-solid fa-heart-crack', tone: added ? 'success' : 'info' });
-    return;
-  }
-
-  const card = e.target.closest('[data-show-card]');
-  if (!card) return;
-  if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
-  if (e.type === 'keydown') e.preventDefault();
-  const idx = Number(card.dataset.showIdx);
-  const show = activeShows[idx];
-  if (show) modal.open(show, card);
 }
 
 function onPaginationClick(e) {
@@ -158,8 +105,8 @@ function onPaginationClick(e) {
 export function init({ grid, pagination }) {
   gridEl = grid; paginationEl = pagination;
   gridEl.innerHTML = gridSkeleton(perPage);
-  gridEl.addEventListener('click', onCardActivate);
-  gridEl.addEventListener('keydown', onCardActivate);
+  gridEl.addEventListener('click', (e) => onCardEvent(e, activeShows));
+  gridEl.addEventListener('keydown', (e) => onCardEvent(e, activeShows));
   paginationEl.addEventListener('click', onPaginationClick);
   subscribe(refreshCardStates);
 }

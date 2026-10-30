@@ -82,11 +82,14 @@ export function setRating(id, value) {
 }
 
 export function getTheme() {
-  const v = localStorage.getItem(KEYS.theme);
+  let v = null;
+  try { v = localStorage.getItem(KEYS.theme); } catch {}
   return v === 'dark' || v === 'light' ? v : null;
 }
 export function setTheme(value) {
-  if (value === null) localStorage.removeItem(KEYS.theme);
-  else localStorage.setItem(KEYS.theme, value);
+  try {
+    if (value === null) localStorage.removeItem(KEYS.theme);
+    else localStorage.setItem(KEYS.theme, value);
+  } catch {}
   emit();
 }

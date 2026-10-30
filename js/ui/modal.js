@@ -5,6 +5,8 @@ import * as toast from './toast.js';
 
 let modalRoot, dialog, titleEl, bodyEl, closeBtn, scrim;
 let lastFocus = null;
+let returnHash = '#/';
+let pushedEntry = false;
 let trapHandler = null;
 let currentShow = null;
 let similarPool = [];
@@ -298,13 +300,31 @@ export function init() {
   closeBtn.addEventListener('click', close);
   scrim.addEventListener('click', close);
   bodyEl.addEventListener('click', onBodyClick);
+  // Browser Back (or any navigation) away from the show's URL closes the modal.
+  window.addEventListener('hashchange', () => {
+    if (!modalRoot.hidden && currentShow && location.hash !== showHash(currentShow)) close();
+  });
 }
+
+function showHash(show) { return `#/show/${show.id}`; }
 
 export function open(show, triggerEl) {
   if (!modalRoot) return;
-  lastFocus = triggerEl || document.activeElement;
+  const wasHidden = modalRoot.hidden;
+  if (wasHidden) {
+    lastFocus = triggerEl || document.activeElement;
+    returnHash = location.hash.startsWith('#/show/') ? '#/' : (location.hash || '#/');
+    pushedEntry = false;
+  }
   currentShow = show;
   pushRecent(show);
+  // Make the open show linkable without triggering the router. The first show
+  // gets its own history entry so Back closes the modal; switching to a similar
+  // show inside the modal replaces it rather than stacking entries.
+  if (show.id && location.hash !== showHash(show)) {
+    if (wasHidden) { history.pushState(null, '', showHash(show)); pushedEntry = true; }
+    else history.replaceState(null, '', showHash(show));
+  }
 
   titleEl.textContent = show.name || 'Untitled';
   bodyEl.innerHTML = bodyHTML(show);
@@ -337,6 +357,8 @@ export function open(show, triggerEl) {
 
 export function close() {
   if (!modalRoot || modalRoot.hidden) return;
+  // Only touch the URL if nothing else has navigated since the modal opened.
+  const onShowUrl = currentShow && location.hash === showHash(currentShow);
   modalRoot.hidden = true;
   document.body.style.overflow = '';
   if (trapHandler) document.removeEventListener('keydown', trapHandler);
@@ -344,5 +366,10 @@ export function close() {
   unsub?.();
   unsub = null;
   currentShow = null;
+  if (onShowUrl) {
+    if (pushedEntry) history.back();
+    else history.replaceState(null, '', returnHash);
+  }
+  pushedEntry = false;
   if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
 }

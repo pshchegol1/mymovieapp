@@ -1,5 +1,6 @@
 import { $, escapeHtml } from '../util/dom.js';
 import { showImage } from '../api.js';
+import * as modal from './modal.js';
 
 const FACTS = [
   'The first movie ever made was in 1888.',
@@ -16,23 +17,36 @@ let index = 0;
 let timer = null;
 let interval = 3500;
 let isPaused = false;
+let scrollSettle = null;
 
-function renderSlide(show, fact, isFirst) {
+const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+
+function renderSlide(show, fact, idx) {
   const img = showImage(show, 'original');
   const genres = (show.genres && show.genres.length) ? show.genres.join(', ') : 'Drama';
   const rating = show.rating?.average ?? 'N/A';
   return `
-    <div class="carousel__slide" role="group" aria-roledescription="slide" aria-label="${escapeHtml(show.name)}">
+    <div class="carousel__slide" role="group" aria-roledescription="slide" aria-label="${escapeHtml(show.name)}"
+         data-slide-idx="${idx}">
       <img class="carousel__img" src="${escapeHtml(img)}" alt=""
-           loading="${isFirst ? 'eager' : 'lazy'}"
+           loading="${idx === 0 ? 'eager' : 'lazy'}"
            onerror="this.onerror=null;this.src='./img/noimg.jpg';">
       <div class="carousel__shade"></div>
       <div class="carousel__caption">
         <span class="carousel__caption-pill"><i class="fa-solid fa-tags"></i> ${escapeHtml(genres)}</span>
         <h3 class="carousel__title">${escapeHtml(show.name)}</h3>
         <p class="carousel__fact"><i class="fa-solid fa-lightbulb"></i> ${escapeHtml(fact)}</p>
+        <button type="button" class="btn btn--primary btn--sm carousel__open" data-slide-open>
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i> Details
+        </button>
       </div>
     </div>`;
+}
+
+function syncIndicators() {
+  Array.from(indicatorsEl.children).forEach((el, k) =>
+    el.setAttribute('aria-selected', k === index ? 'true' : 'false')
+  );
 }
 
 function renderIndicators(count) {
@@ -51,11 +65,29 @@ function goTo(i, opts = {}) {
   index = ((i % slides.length) + slides.length) % slides.length;
   const target = trackEl.children[index];
   if (target) {
-    trackEl.scrollTo({ left: target.offsetLeft, behavior: opts.instant ? 'auto' : 'smooth' });
+    const smooth = !opts.instant && !reducedMotion?.matches;
+    trackEl.scrollTo({ left: target.offsetLeft, behavior: smooth ? 'smooth' : 'auto' });
   }
-  Array.from(indicatorsEl.children).forEach((el, k) =>
-    el.setAttribute('aria-selected', k === index ? 'true' : 'false')
-  );
+  syncIndicators();
+}
+
+// After a manual swipe/scroll settles, adopt whichever slide is in view.
+function onTrackScroll() {
+  clearTimeout(scrollSettle);
+  scrollSettle = setTimeout(() => {
+    if (!slides.length || !trackEl.clientWidth) return;
+    const i = Math.round(trackEl.scrollLeft / trackEl.clientWidth);
+    if (i === index || i < 0 || i >= slides.length) return;
+    index = i;
+    syncIndicators();
+    start();
+  }, 120);
+}
+
+function onSlideClick(e) {
+  const slide = e.target.closest('[data-slide-idx]');
+  const show = slide && slides[Number(slide.dataset.slideIdx)];
+  if (show) modal.open(show, e.target.closest('[data-slide-open]') || slide);
 }
 
 function next() { goTo(index + 1); }
@@ -63,7 +95,7 @@ function prev() { goTo(index - 1); }
 
 function start() {
   stop();
-  if (slides.length <= 1) return;
+  if (slides.length <= 1 || reducedMotion?.matches || document.hidden) return;
   timer = setInterval(() => { if (!isPaused) next(); }, interval);
 }
 function stop() { if (timer) clearInterval(timer); timer = null; }
@@ -85,12 +117,16 @@ export function init({ root, track, indicators, prev: pBtn, next: nBtn }) {
   rootEl.addEventListener('mouseleave', () => { isPaused = false; });
   rootEl.addEventListener('focusin', () => { isPaused = true; });
   rootEl.addEventListener('focusout', () => { isPaused = false; });
+  trackEl.addEventListener('scroll', onTrackScroll, { passive: true });
+  trackEl.addEventListener('click', onSlideClick);
+  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+  reducedMotion?.addEventListener?.('change', start);
 }
 
 export function setShows(shows) {
   slides = shows.filter((s) => s.image && s.image.original).slice(0, 8);
   if (!slides.length) return;
-  trackEl.innerHTML = slides.map((s, i) => renderSlide(s, FACTS[i % FACTS.length], i === 0)).join('');
+  trackEl.innerHTML = slides.map((s, i) => renderSlide(s, FACTS[i % FACTS.length], i)).join('');
   renderIndicators(slides.length);
   index = 0;
   start();

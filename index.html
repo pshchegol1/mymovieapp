@@ -58,7 +58,7 @@
       <section class="widget glass widget--countdown" aria-labelledby="cd-title">
         <header class="widget__header">
           <i class="fa-solid fa-hourglass-start" aria-hidden="true"></i>
-          <h2 id="cd-title" class="widget__title">Upcoming releases</h2>
+          <h2 id="cd-title" class="widget__title">Upcoming premieres</h2>
         </header>
         <ol class="widget__body" data-countdown-items></ol>
       </section>
@@ -107,6 +107,12 @@
         <header class="shows__header">
           <h2 id="shows-title" class="shows__title">TV shows</h2>
         </header>
+        <div class="search-status" data-search-status hidden>
+          <span>Results for “<strong data-search-term></strong>”</span>
+          <button type="button" class="btn btn--ghost btn--sm" data-search-clear>
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i> Clear search
+          </button>
+        </div>
         <div class="cat-tabs" data-cat-tabs role="tablist" aria-label="Browse"></div>
         <div class="genre-filter" data-genre-filter role="toolbar" aria-label="Filter by genre"></div>
         <div class="sort-bar" data-sort-bar>

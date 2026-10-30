@@ -70,6 +70,19 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   color: var(--color-text);
+  text-align: left;
+  padding: 0;
+}
+.countdown-item__title:hover { text-decoration: underline; }
+.countdown-item__season {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+  color: var(--color-text-soft);
+}
+.countdown-item--note {
+  font-size: var(--fs-sm);
+  color: var(--color-text-soft);
 }
 .countdown-item__time {
   font-size: var(--fs-sm);
