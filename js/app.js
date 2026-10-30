@@ -61,6 +61,14 @@ search.init({
   onSearch: () => {
     genreFilter.setActive(null);
     sort.reset();
+    // Results render into the home grid, which is hidden on other views.
+    if ($('[data-view="home"]').hidden) router.go('/');
+  },
+  onResults: (results) => {
+    const shown = results.filter((s) => s.image && s.image.medium).length;
+    const countEl = $('[data-result-count]');
+    if (countEl) countEl.textContent = `${shown} show${shown === 1 ? '' : 's'}`;
+    $('[data-shows-grid]').scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
   onReset: () => {
     genreFilter.setActive(null);
