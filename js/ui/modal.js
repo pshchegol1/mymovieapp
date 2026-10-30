@@ -50,10 +50,12 @@ function ratingStars(value) {
 }
 
 function bodyHTML(show) {
-  const img = showImage(show, 'original');
-  const genres = (show.genres && show.genres.length) ? show.genres.join(', ') : 'Unknown';
-  const rating = show.rating?.average ?? 'Unrated';
-  const premiered = show.premiered || 'Unknown';
+  const img = showImage(show, 'medium');
+  const genres = show.genres?.length ? show.genres.join(', ') : '';
+  const rating = show.rating?.average;
+  const premiered = show.premiered
+    ? new Date(`${show.premiered}T00:00`).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' })
+    : '';
   const summary = stripTags(show.summary) || 'No summary available.';
   const site = show.officialSite || show.url || '';
   const network = show.network?.name || show.webChannel?.name || '';
@@ -63,31 +65,34 @@ function bodyHTML(show) {
   const trailerQ = encodeURIComponent(`${show.name || ''} official trailer`);
 
   return `
-    <img src="${escapeHtml(img)}" alt="${escapeHtml(show.name || '')}" class="modal__hero" onerror="this.onerror=null;this.src='./img/noimg.jpg';">
-    <div class="modal__meta-row">
-      <div class="modal__row"><i class="fa-solid fa-tags" aria-hidden="true"></i><span><strong>Genres:</strong> ${escapeHtml(genres)}</span></div>
-      <div class="modal__row"><i class="fa-solid fa-star" aria-hidden="true"></i><span><strong>Rating:</strong> ${escapeHtml(rating)}</span></div>
-      <div class="modal__row"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span><strong>Premiered:</strong> ${escapeHtml(premiered)}</span></div>
-      ${network ? `<div class="modal__row"><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i><span><strong>Network:</strong> ${escapeHtml(network)}</span></div>` : ''}
-      ${runtime ? `<div class="modal__row"><i class="fa-solid fa-clock" aria-hidden="true"></i><span><strong>Runtime:</strong> ${escapeHtml(runtime)} min</span></div>` : ''}
-      ${show.status ? `<div class="modal__row"><i class="fa-solid fa-signal" aria-hidden="true"></i><span><strong>Status:</strong> ${escapeHtml(show.status)}</span></div>` : ''}
+    <div class="modal__top">
+      <img src="${escapeHtml(img)}" alt="${escapeHtml(show.name || '')} poster" class="modal__poster" onerror="this.onerror=null;this.src='./img/noimg.jpg';">
+      <div class="modal__info">
+        <div class="modal__meta-row">
+          ${genres ? `<div class="modal__row"><i class="fa-solid fa-tags" aria-hidden="true"></i><span><strong>Genres:</strong> ${escapeHtml(genres)}</span></div>` : ''}
+          ${rating != null ? `<div class="modal__row"><i class="fa-solid fa-star" aria-hidden="true"></i><span><strong>Rating:</strong> ${escapeHtml(Number(rating).toFixed(1))}</span></div>` : ''}
+          ${premiered ? `<div class="modal__row"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span><strong>Premiered:</strong> ${escapeHtml(premiered)}</span></div>` : ''}
+          ${network ? `<div class="modal__row"><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i><span><strong>Network:</strong> ${escapeHtml(network)}</span></div>` : ''}
+          ${runtime ? `<div class="modal__row"><i class="fa-solid fa-clock" aria-hidden="true"></i><span><strong>Runtime:</strong> ${escapeHtml(runtime)} min</span></div>` : ''}
+          ${show.status ? `<div class="modal__row"><i class="fa-solid fa-signal" aria-hidden="true"></i><span><strong>Status:</strong> ${escapeHtml(show.status)}</span></div>` : ''}
+        </div>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--primary btn--sm" data-action="watchlist" aria-pressed="${inList}">
+            <i class="fa-${inList ? 'solid' : 'regular'} fa-heart"></i>
+            <span>${inList ? 'In your list' : 'Add to list'}</span>
+          </button>
+          <button type="button" class="btn btn--accent btn--sm" data-action="trailer">
+            <i class="fa-solid fa-play"></i> Watch trailer
+          </button>
+          <button type="button" class="btn btn--ghost btn--sm" data-action="share">
+            <i class="fa-solid fa-share-nodes"></i> Share
+          </button>
+          ${site ? `<a class="btn btn--ghost btn--sm" href="${escapeHtml(site)}" target="_blank" rel="noopener">Official site</a>` : ''}
+        </div>
+      </div>
     </div>
 
     <p class="modal__summary">${escapeHtml(summary)}</p>
-
-    <div class="modal__actions">
-      <button type="button" class="btn btn--primary btn--sm" data-action="watchlist" aria-pressed="${inList}">
-        <i class="fa-${inList ? 'solid' : 'regular'} fa-heart"></i>
-        <span>${inList ? 'In your list' : 'Add to list'}</span>
-      </button>
-      <button type="button" class="btn btn--accent btn--sm" data-action="trailer">
-        <i class="fa-solid fa-play"></i> Watch trailer
-      </button>
-      <button type="button" class="btn btn--ghost btn--sm" data-action="share">
-        <i class="fa-solid fa-share-nodes"></i> Share
-      </button>
-      ${site ? `<a class="btn btn--ghost btn--sm" href="${escapeHtml(site)}" target="_blank" rel="noopener">Official site</a>` : ''}
-    </div>
 
     <div class="modal__trailer" data-trailer-mount hidden></div>
 

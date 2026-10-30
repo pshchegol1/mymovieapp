@@ -17,6 +17,7 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   text-decoration: none;
+  white-space: nowrap;
   transition: background var(--dur-fast) var(--ease-standard),
               color var(--dur-fast) var(--ease-standard),
               transform var(--dur-fast) var(--ease-spring);
@@ -70,12 +71,25 @@
   transform: rotate(20deg);
 }
 
-@media (max-width: 1100px) {
-  .primary-nav__link span:not(.primary-nav__badge) { display: none; }
+/* Icon-only nav: labels stay in the accessibility tree (visually hidden, not display:none). */
+@media (max-width: 1100px) and (min-width: 768px) {
+  .primary-nav__link span:not(.primary-nav__badge) {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
   .primary-nav__link { padding: var(--space-2); width: 2.5rem; height: 2.5rem; justify-content: center; }
+  .primary-nav__badge { position: absolute; top: -4px; right: -6px; min-width: 1.1rem; height: 1.1rem; padding: 0 4px; font-size: 0.65rem; }
+  .primary-nav__badge,
+  .primary-nav__link.is-active .primary-nav__badge {
+    background: hsl(var(--h-rose));
+    box-shadow: 0 0 0 2px var(--color-bg);
+  }
 }
+/* Phones: full-width tab row under the brand/search row. */
 @media (max-width: 767px) {
-  .primary-nav { order: 3; flex: 1 0 100%; justify-content: space-around; padding-top: var(--space-2); border-top: 1px solid var(--color-border-hairline); }
-  .primary-nav__link { width: auto; padding: var(--space-2) var(--space-3); }
-  .primary-nav__link span:not(.primary-nav__badge) { display: inline; }
+  .primary-nav { order: 3; flex: 1 0 100%; gap: 2px; justify-content: space-between; }
+  .primary-nav__link { flex: 1 1 0; justify-content: center; gap: 6px; padding: var(--space-2) var(--space-1); }
+  .primary-nav__badge { min-width: 1.15rem; height: 1.15rem; padding: 0 4px; font-size: 0.65rem; }
+}
+@media (max-width: 400px) {
+  .primary-nav__link { font-size: var(--fs-xs); gap: 4px; }
 }

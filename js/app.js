@@ -76,7 +76,7 @@ search.init({
     genreFilter.setShows(searchResults);
     sort.setShows(searchResults);
     refreshGrid();
-    $('[data-shows-grid]').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('[data-search-status]').scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
   onReset: () => {
     clearSearch();

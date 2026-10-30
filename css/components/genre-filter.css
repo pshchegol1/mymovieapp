@@ -11,6 +11,19 @@
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--n-700) / 0.35) transparent;
 }
+.genre-filter { --fade: 3rem; }
+.genre-filter.has-more-end {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
+          mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
+}
+.genre-filter.is-scrolled-start {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade));
+          mask-image: linear-gradient(to right, transparent, #000 var(--fade));
+}
+.genre-filter.is-scrolled-start.has-more-end {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+          mask-image: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+}
 .genre-filter::-webkit-scrollbar { height: 6px; }
 .genre-filter::-webkit-scrollbar-track { background: transparent; }
 .genre-filter::-webkit-scrollbar-thumb {

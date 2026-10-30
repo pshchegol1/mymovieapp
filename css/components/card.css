@@ -80,7 +80,8 @@
 }
 .show-card__meta {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
   gap: var(--space-1);
   margin-top: auto;
 }

@@ -168,6 +168,11 @@
   background: hsl(var(--h-amber) / 0.32);
   color: hsl(38 100% 80%);
 }
+[data-theme="dark"] .badge          { color: hsl(210 90% 72%); background: hsl(var(--h-blue) / 0.2); }
+[data-theme="dark"] .badge--violet  { color: hsl(282 75% 78%); background: hsl(var(--h-violet) / 0.22); }
+[data-theme="dark"] .badge--amber   { color: hsl(38 95% 68%); background: hsl(var(--h-amber) / 0.18); }
+[data-theme="dark"] .badge--cyan    { color: hsl(188 80% 65%); background: hsl(var(--h-cyan) / 0.18); }
+[data-theme="dark"] .badge--rose    { color: hsl(340 85% 75%); background: hsl(var(--h-rose) / 0.2); }
 [data-theme="dark"] .show-card__myrate {
   background: hsl(var(--h-amber) / 0.92);
   color: hsl(220 30% 10%);

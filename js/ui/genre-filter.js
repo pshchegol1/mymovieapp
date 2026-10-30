@@ -35,6 +35,14 @@ function render(shows) {
     out += pill(name, name, count, activeGenre === name);
   }
   containerEl.innerHTML = out;
+  updateFade();
+}
+
+// Fade whichever edge has more pills hidden behind it.
+function updateFade() {
+  const el = containerEl;
+  el.classList.toggle('is-scrolled-start', el.scrollLeft > 4);
+  el.classList.toggle('has-more-end', el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
 }
 
 function attachWheelScroll(el) {
@@ -63,6 +71,8 @@ export function init({ container, onSelect }) {
     btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   });
   attachWheelScroll(containerEl);
+  containerEl.addEventListener('scroll', updateFade, { passive: true });
+  window.addEventListener('resize', updateFade);
 }
 
 export function setShows(shows) {

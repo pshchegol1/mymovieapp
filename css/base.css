@@ -1,5 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Components set their own `display`, which would otherwise override [hidden]. */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {

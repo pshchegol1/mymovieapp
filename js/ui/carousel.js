@@ -1,15 +1,6 @@
-import { $, escapeHtml } from '../util/dom.js';
+import { escapeHtml, stripTags } from '../util/dom.js';
 import { showImage } from '../api.js';
 import * as modal from './modal.js';
-
-const FACTS = [
-  'The first movie ever made was in 1888.',
-  'The Oscar statuette is officially called the "Academy Award of Merit".',
-  'The longest movie ever made is over 85 hours long.',
-  'James Cameron drew the sketch of Rose in Titanic himself.',
-  'Psycho was the first American film to show a toilet flushing.',
-  'Velociraptor sounds in Jurassic Park are actually mating tortoises.',
-];
 
 let trackEl, indicatorsEl, prevBtn, nextBtn, rootEl;
 let slides = [];
@@ -21,21 +12,32 @@ let scrollSettle = null;
 
 const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 
-function renderSlide(show, fact, idx) {
-  const img = showImage(show, 'original');
-  const genres = (show.genres && show.genres.length) ? show.genres.join(', ') : 'Drama';
-  const rating = show.rating?.average ?? 'N/A';
+function renderSlide(show, idx) {
+  const backdrop = showImage(show, 'original');
+  const poster = showImage(show, 'medium');
+  const rating = show.rating?.average;
+  const year = show.premiered ? new Date(show.premiered).getFullYear() : null;
+  const network = show.network?.name || show.webChannel?.name;
+  const meta = [
+    rating != null ? `<span><i class="fa-solid fa-star" aria-hidden="true"></i> ${Number(rating).toFixed(1)}</span>` : '',
+    year ? `<span>${year}</span>` : '',
+    network ? `<span>${escapeHtml(network)}</span>` : '',
+  ].filter(Boolean).join('');
+  const summary = stripTags(show.summary);
+  const loading = idx === 0 ? 'eager' : 'lazy';
   return `
     <div class="carousel__slide" role="group" aria-roledescription="slide" aria-label="${escapeHtml(show.name)}"
          data-slide-idx="${idx}">
-      <img class="carousel__img" src="${escapeHtml(img)}" alt=""
-           loading="${idx === 0 ? 'eager' : 'lazy'}"
+      <img class="carousel__backdrop" src="${escapeHtml(backdrop)}" alt="" loading="${loading}"
            onerror="this.onerror=null;this.src='./img/noimg.jpg';">
       <div class="carousel__shade"></div>
+      <img class="carousel__poster" src="${escapeHtml(poster)}" alt="" loading="${loading}"
+           onerror="this.onerror=null;this.src='./img/noimg.jpg';">
       <div class="carousel__caption">
-        <span class="carousel__caption-pill"><i class="fa-solid fa-tags"></i> ${escapeHtml(genres)}</span>
+        ${show.genres?.length ? `<span class="carousel__caption-pill">${escapeHtml(show.genres.slice(0, 3).join(' · '))}</span>` : ''}
         <h3 class="carousel__title">${escapeHtml(show.name)}</h3>
-        <p class="carousel__fact"><i class="fa-solid fa-lightbulb"></i> ${escapeHtml(fact)}</p>
+        ${meta ? `<p class="carousel__meta">${meta}</p>` : ''}
+        ${summary ? `<p class="carousel__summary">${escapeHtml(summary)}</p>` : ''}
         <button type="button" class="btn btn--primary btn--sm carousel__open" data-slide-open>
           <i class="fa-solid fa-circle-info" aria-hidden="true"></i> Details
         </button>
@@ -126,7 +128,7 @@ export function init({ root, track, indicators, prev: pBtn, next: nBtn }) {
 export function setShows(shows) {
   slides = shows.filter((s) => s.image && s.image.original).slice(0, 8);
   if (!slides.length) return;
-  trackEl.innerHTML = slides.map((s, i) => renderSlide(s, FACTS[i % FACTS.length], i)).join('');
+  trackEl.innerHTML = slides.map((s, i) => renderSlide(s, i)).join('');
   renderIndicators(slides.length);
   index = 0;
   start();

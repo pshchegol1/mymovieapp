@@ -6,8 +6,9 @@ import * as toast from './toast.js';
 
 const BADGE_VARIANTS = ['', '--violet', '--amber', '--cyan', '--rose'];
 
+// Two badges keep every card's meta on one line, so rows line up.
 function badgesFor(genres) {
-  return (genres || []).slice(0, 3).map((g, i) =>
+  return (genres || []).slice(0, 2).map((g, i) =>
     `<span class="badge badge${BADGE_VARIANTS[i % BADGE_VARIANTS.length]}">${escapeHtml(g)}</span>`
   ).join('');
 }
@@ -19,8 +20,6 @@ function heartIcon(inList) {
 export function renderCard(show, idx) {
   const img = showImage(show, 'medium');
   const rating = show.rating?.average;
-  const ratingStr = (rating === null || rating === undefined) ? '—' : Number(rating).toFixed(1);
-  const genres = (show.genres && show.genres.length) ? show.genres : ['Unknown'];
   const premiered = show.premiered ? new Date(show.premiered).getFullYear() : '—';
   const inList = isInWatchlist(show.id);
   const myRating = getRating(show.id);
@@ -32,7 +31,7 @@ export function renderCard(show, idx) {
       <div class="show-card__media">
         <img class="show-card__img" src="${escapeHtml(img)}" alt="${escapeHtml(show.name)}"
              loading="lazy" onerror="this.onerror=null;this.src='./img/noimg.jpg';">
-        <span class="show-card__rating"><i class="fa-solid fa-star"></i> ${escapeHtml(ratingStr)}</span>
+        ${rating == null ? '' : `<span class="show-card__rating"><i class="fa-solid fa-star" aria-hidden="true"></i> ${Number(rating).toFixed(1)}</span>`}
         <button type="button" class="show-card__heart${inList ? ' is-on' : ''}" data-watch-toggle
                 aria-label="${inList ? 'Remove from your list' : 'Add to your list'}"
                 aria-pressed="${inList}">
@@ -43,7 +42,7 @@ export function renderCard(show, idx) {
       <div class="show-card__body">
         <h3 class="show-card__title">${escapeHtml(show.name)}</h3>
         <span class="show-card__premiered">${escapeHtml(premiered)}</span>
-        <div class="show-card__meta">${badgesFor(genres)}</div>
+        <div class="show-card__meta">${badgesFor(show.genres)}</div>
       </div>
     </article>`;
 }

@@ -19,48 +19,61 @@
   position: relative;
   flex: 0 0 100%;
   scroll-snap-align: start;
-  aspect-ratio: 21 / 9;
-  background: hsl(var(--n-100));
+  aspect-ratio: 21 / 8;
+  display: flex;
+  align-items: center;
+  gap: clamp(var(--space-4), 3vw, var(--space-6));
+  padding: clamp(var(--space-4), 3vw, var(--space-6));
+  padding-right: clamp(var(--space-4), 4vw, var(--space-7));
+  background: hsl(220 30% 12%);
   overflow: hidden;
+  isolation: isolate;
   border-radius: calc(var(--radius-lg) - 6px);
   cursor: pointer;
 }
-.carousel__img {
+/* Blurred, darkened poster fills the wide slide without awkward cropping. */
+.carousel__backdrop {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: -24px;
+  width: calc(100% + 48px);
+  height: calc(100% + 48px);
+  max-width: none;
   object-fit: cover;
+  filter: blur(22px) saturate(1.3) brightness(0.55);
+  transform: scale(1.05);
+  z-index: -2;
 }
 .carousel__shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg,
-    hsl(var(--n-900) / 0) 30%,
-    hsl(var(--n-900) / 0.65) 100%);
+  background: linear-gradient(90deg, hsl(220 40% 6% / 0.55) 0%, hsl(220 40% 6% / 0.15) 70%);
   pointer-events: none;
+  z-index: -1;
+}
+.carousel__poster {
+  flex: 0 0 auto;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px hsl(0 0% 0% / 0.45);
 }
 .carousel__caption {
-  position: absolute;
-  left: clamp(var(--space-3), 3vw, var(--space-5));
-  right: clamp(var(--space-3), 3vw, var(--space-5));
-  bottom: clamp(var(--space-3), 3vw, var(--space-5));
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   align-items: flex-start;
   color: white;
-  max-width: calc(100% - 6.5rem);
+  /* leave room for the controls pill in the bottom-right corner */
+  padding-bottom: var(--space-6);
 }
 .carousel__caption-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 6px 14px;
-  background: hsl(var(--n-900) / 0.4);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-          backdrop-filter: blur(12px) saturate(150%);
-  border: 1px solid hsl(var(--n-0) / 0.25);
+  padding: 4px 12px;
+  background: hsl(0 0% 100% / 0.14);
+  border: 1px solid hsl(0 0% 100% / 0.22);
   border-radius: var(--radius-pill);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
@@ -74,17 +87,33 @@
   font-size: clamp(var(--fs-lg), 3vw, var(--fs-2xl));
   font-weight: var(--fw-bold);
   color: white;
-  text-shadow: 0 2px 16px hsl(var(--n-900) / 0.5);
+  text-shadow: 0 2px 16px hsl(0 0% 0% / 0.4);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.carousel__fact {
+.carousel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   font-size: var(--fs-sm);
-  color: hsl(var(--n-0) / 0.85);
-  text-shadow: 0 1px 8px hsl(var(--n-900) / 0.5);
-  max-width: 38rem;
+  font-weight: var(--fw-semibold);
+  color: hsl(0 0% 100% / 0.85);
+}
+.carousel__meta { column-gap: 0; flex-wrap: nowrap; white-space: nowrap; max-width: 100%; }
+.carousel__meta > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.carousel__meta > span:not(:first-child)::before { content: '·'; margin: 0 var(--space-2); }
+.carousel__meta .fa-star { color: hsl(var(--h-amber)); }
+.carousel__summary {
+  max-width: 40rem;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: hsl(0 0% 100% / 0.82);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .carousel__open { margin-top: var(--space-1); }
 
@@ -143,16 +172,17 @@
 }
 
 @media (max-width: 1023px) {
-  .carousel__slide { aspect-ratio: 16 / 9; }
+  .carousel__slide { aspect-ratio: 16 / 8; }
 }
 @media (max-width: 767px) {
   .carousel__slide { aspect-ratio: 16 / 10; }
-  .carousel__fact { display: none; }
-  .carousel__caption { max-width: calc(100% - 5.5rem); }
+  .carousel__summary { -webkit-line-clamp: 3; }
 }
 @media (max-width: 480px) {
-  .carousel__slide { aspect-ratio: 4 / 3; }
-  .carousel__open { display: none; }
+  .carousel__slide { aspect-ratio: 4 / 3.4; gap: var(--space-3); padding: var(--space-3); }
+  .carousel__poster { height: 78%; }
+  .carousel__summary, .carousel__open { display: none; }
+  .carousel__caption { padding-bottom: var(--space-7); }
   .carousel__btn { width: 2rem; height: 2rem; }
   .carousel__indicators { padding: 0 var(--space-1); }
   .carousel__indicator { width: 6px; height: 6px; }

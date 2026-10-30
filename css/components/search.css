@@ -30,6 +30,7 @@
   font-size: var(--fs-base);
   color: var(--color-text);
 }
+.search__input:focus-visible { box-shadow: none; }
 .search__input::placeholder { color: var(--color-text-soft); }
 
 .search__btn {

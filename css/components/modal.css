@@ -74,12 +74,29 @@
   flex-direction: column;
   gap: var(--space-4);
 }
-.modal__hero {
+.modal__top {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+.modal__poster {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 2 / 3;
   object-fit: cover;
   border-radius: var(--radius-md);
   background: hsl(var(--n-100));
+  box-shadow: var(--shadow-2);
+}
+.modal__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+@media (max-width: 480px) {
+  .modal__top { grid-template-columns: 6.5rem minmax(0, 1fr); gap: var(--space-3); }
+  .modal__info { gap: var(--space-3); }
 }
 .modal__row {
   display: flex;

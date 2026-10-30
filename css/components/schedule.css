@@ -49,19 +49,18 @@
   padding: var(--space-2) var(--space-2) var(--space-2) 0;
 }
 .schedule-card__time {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
   font-size: var(--fs-xs);
   color: var(--color-text-muted);
   font-weight: var(--fw-semibold);
+  white-space: nowrap;
 }
 .schedule-card__net {
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  background: hsl(var(--h-blue) / 0.15);
-  color: hsl(var(--h-blue));
   font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: hsl(var(--h-blue));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .schedule-card__title {
   font-size: var(--fs-sm);

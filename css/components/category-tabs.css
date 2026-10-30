@@ -21,6 +21,10 @@
               transform var(--dur-fast) var(--ease-spring),
               box-shadow var(--dur-fast) var(--ease-standard);
 }
+@media (max-width: 480px) {
+  .cat-tabs { flex-wrap: nowrap; gap: var(--space-1); }
+  .cat-tab { flex: 1 1 0; justify-content: center; gap: 4px; padding: var(--space-2); font-size: var(--fs-xs); white-space: nowrap; }
+}
 .cat-tab:hover { background: hsl(var(--n-0) / 0.85); color: var(--color-text); transform: translateY(-1px); }
 .cat-tab.is-active {
   background: var(--grad-cta);
