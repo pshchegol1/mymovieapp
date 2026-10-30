@@ -150,13 +150,46 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <p class="site-footer__quote" data-footer-quote></p>
-    <ul class="site-footer__social">
-      <li><a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a></li>
-      <li><a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook" aria-hidden="true"></i></a></li>
-      <li><a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a></li>
-    </ul>
+  <footer class="site-footer" data-footer>
+    <div class="site-footer__inner">
+      <section class="footer-col footer-col--brand" aria-labelledby="footer-surprise-title">
+        <a class="brand" href="#/">
+          <span class="brand__icon"><i class="fa-solid fa-film" aria-hidden="true"></i></span>
+          <span class="brand__name">MovieMatrix</span>
+        </a>
+        <p class="footer-tagline" data-footer-tagline></p>
+        <h2 id="footer-surprise-title" class="footer-col__title">Can’t decide?</h2>
+        <button type="button" class="btn btn--primary footer-surprise" data-surprise>
+          <i class="fa-solid fa-dice" aria-hidden="true"></i> Surprise me
+        </button>
+        <p class="footer-hint" data-surprise-hint></p>
+      </section>
+
+      <section class="footer-col" aria-labelledby="footer-profile-title">
+        <h2 id="footer-profile-title" class="footer-col__title">Your TV profile</h2>
+        <div data-footer-profile></div>
+      </section>
+
+      <nav class="footer-col" aria-labelledby="footer-explore-title">
+        <h2 id="footer-explore-title" class="footer-col__title">Explore</h2>
+        <ul class="footer-links">
+          <li><a href="#/"><i class="fa-solid fa-house" aria-hidden="true"></i> Browse shows</a></li>
+          <li><a href="#/watchlist"><i class="fa-solid fa-heart" aria-hidden="true"></i> My list</a></li>
+          <li><a href="#/recent"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Recently viewed</a></li>
+          <li><a href="#/schedule"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i> On tonight</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="site-footer__bar">
+      <p>© <span data-footer-year></span> MovieMatrix · TV data from
+        <a href="https://www.tvmaze.com" target="_blank" rel="noopener">TVMaze</a>
+        (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA</a>)
+      </p>
+      <button type="button" class="footer-top" data-back-to-top>
+        Back to top <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+      </button>
+    </div>
   </footer>
 
   <div class="modal" data-modal hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">

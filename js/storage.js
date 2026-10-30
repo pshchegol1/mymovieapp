@@ -69,6 +69,7 @@ export function pushRecent(show) {
 }
 export function clearRecent() { writeJSON(KEYS.recent, []); emit(); }
 
+export function getRatings() { return readJSON(KEYS.ratings, {}); }
 export function getRating(id) {
   const all = readJSON(KEYS.ratings, {});
   return all[id] || 0;

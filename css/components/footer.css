@@ -1,0 +1,149 @@
+.site-footer {
+  margin-top: var(--space-6);
+  background: hsl(var(--n-0) / 0.62);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+          backdrop-filter: blur(20px) saturate(160%);
+  border-top: 1px solid hsl(var(--n-0) / 0.65);
+  box-shadow: 0 -4px 16px hsl(var(--n-900) / 0.06);
+}
+.site-footer__inner {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 1fr;
+  gap: var(--space-6);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-6) clamp(var(--space-3), 3vw, var(--space-6));
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.footer-col__title {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-soft);
+}
+.footer-col--brand .footer-col__title { margin-top: var(--space-2); }
+
+/* The header hides the brand name on phones; the footer has room for it. */
+.site-footer .brand__name { display: inline; }
+
+.footer-tagline {
+  font-size: var(--fs-sm);
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+.footer-surprise { min-height: 2.75rem; padding-inline: var(--space-5); }
+.footer-surprise .fa-dice { transition: transform var(--dur-base) var(--ease-spring); }
+.footer-surprise:hover .fa-dice { transform: rotate(-20deg) scale(1.15); }
+.footer-hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+}
+
+/* Profile stats */
+.footer-stats {
+  display: grid;
+  /* the genre name needs more room than the two counts */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.7fr);
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+}
+.footer-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  background: hsl(var(--n-0) / 0.55);
+  border: 1px solid hsl(var(--n-0) / 0.6);
+  border-radius: var(--radius-md);
+  min-width: 0;
+}
+.footer-stat dt {
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+}
+.footer-stat dd {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--color-text);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+.footer-stat__sub {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+}
+.footer-stat__sub .fa-star { color: hsl(var(--h-amber)); }
+.footer-profile__empty {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  max-width: 24rem;
+}
+
+/* Explore links */
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+}
+.footer-links a i { width: 1rem; text-align: center; color: hsl(var(--h-blue)); }
+.footer-links a:hover { color: var(--color-text); }
+
+/* Bottom bar */
+.site-footer__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-3) clamp(var(--space-3), 3vw, var(--space-6));
+  border-top: 1px solid var(--color-border-hairline);
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+}
+.site-footer__bar a { font-weight: var(--fw-semibold); }
+.footer-top {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+}
+.footer-top:hover { color: var(--color-text); background: hsl(var(--n-0) / 0.7); }
+
+@media (max-width: 1023px) {
+  .site-footer__inner { grid-template-columns: 1fr 1fr; }
+  .footer-col:nth-child(2) { grid-column: 1 / -1; grid-row: 1; }
+}
+@media (max-width: 599px) {
+  .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-5); padding-block: var(--space-5); }
+  .footer-col:nth-child(2) { grid-row: auto; }
+  .footer-stats { gap: var(--space-2); }
+  .footer-stat { padding: var(--space-2) var(--space-3); }
+  .footer-stat dd { font-size: var(--fs-md); }
+  .site-footer__bar { justify-content: center; text-align: center; }
+}

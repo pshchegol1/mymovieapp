@@ -113,7 +113,7 @@ sidebar.init({
   quote: $('[data-quote]'),
 });
 
-footer.init({ quoteEl: $('[data-footer-quote]') });
+footer.init({ root: $('[data-footer]'), shows: () => initialShows });
 
 const recentClearBtn = $('[data-recent-clear]');
 if (recentClearBtn) recentClearBtn.addEventListener('click', () => clearRecent());
