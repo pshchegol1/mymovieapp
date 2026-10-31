@@ -48,6 +48,10 @@ export async function fetchNextEpisode(id) {
   return show._embedded?.nextepisode ?? null;
 }
 
+export async function fetchShowEpisodes(id) {
+  return getJSON(`${BASE}/shows/${id}/episodes`);
+}
+
 export async function fetchCast(id) {
   return getJSON(`${BASE}/shows/${id}/cast`);
 }

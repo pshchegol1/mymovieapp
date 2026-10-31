@@ -18,7 +18,7 @@
 }
 .widget--countdown { --widget-hue: var(--h-blue); }
 .widget--fact      { --widget-hue: var(--h-amber); }
-.widget--quote     { --widget-hue: var(--h-violet); }
+.widget--otd       { --widget-hue: var(--h-violet); }
 
 .widget__header {
   display: flex;
@@ -50,11 +50,6 @@
   font-size: var(--fs-sm);
   color: var(--color-text);
   line-height: var(--lh-body);
-}
-
-.widget--quote .widget__body {
-  font-style: italic;
-  color: var(--color-text-muted);
 }
 
 .countdown-item {
@@ -105,4 +100,68 @@
   background: var(--grad-cta);
   border-radius: var(--radius-pill);
   transition: width var(--dur-slow) var(--ease-out-quart);
+}
+
+/* Footer button on the On this day / Trivia widgets */
+.widget__action {
+  position: relative;
+  align-self: flex-start;
+}
+
+/* On this day in TV */
+.otd__date {
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+  margin-bottom: var(--space-2);
+}
+.otd__date strong { color: var(--color-text); font-weight: var(--fw-semibold); }
+.otd__list { display: flex; flex-direction: column; gap: var(--space-2); }
+.otd__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  color: inherit;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.otd__item:hover { background: hsl(var(--widget-hue) / 0.1); }
+.otd__thumb {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-xs);
+  background: hsl(var(--n-100));
+}
+.otd__text { display: flex; flex-direction: column; min-width: 0; }
+.otd__show {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+}
+.otd__ep, .otd__note {
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+}
+.otd__ep {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* TV trivia */
+.trivia__show {
+  display: inline;
+  padding: 0;
+  font: inherit;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--widget-hue));
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  cursor: pointer;
 }

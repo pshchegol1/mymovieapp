@@ -5,25 +5,6 @@ import { episodeLabel } from '../util/episode.js';
 import { mapLimit } from '../util/async.js';
 import * as modal from './modal.js';
 
-const FUN_FACTS = [
-  'The longest movie ever made is over 85 hours long.',
-  'The first feature-length animated movie was made in 1917.',
-  'James Cameron drew the sketch of Rose in Titanic himself.',
-  'The sound of velociraptors in Jurassic Park is mating tortoises.',
-  'Psycho was the first American film to show a toilet flushing.',
-];
-
-const QUOTES = [
-  'May the Force be with you.',
-  "Here's looking at you, kid.",
-  "I'll be back.",
-  'You talking to me?',
-  'To infinity and beyond!',
-  "I'm king of the world!",
-  'Why so serious?',
-  'Houston, we have a problem.',
-];
-
 const PREMIERE_COUNT = 3;
 const LOOKAHEAD_DAYS = 14;
 const DAYS_PER_BATCH = 3;
@@ -180,7 +161,7 @@ async function loadNextEpisodes(listEl) {
   tick(listEl, nextEps);
 }
 
-export function init({ nextList, countdownList, funFact, quote }) {
+export function init({ nextList, countdownList }) {
   initPremieres(countdownList);
   openOnClick(countdownList, () => premieres);
 
@@ -195,7 +176,4 @@ export function init({ nextList, countdownList, funFact, quote }) {
     tick(countdownList, premieres);
     if (nextList) tick(nextList, nextEps);
   }, 1000);
-
-  funFact.textContent = FUN_FACTS[Math.floor(Math.random() * FUN_FACTS.length)];
-  quote.textContent = `“${QUOTES[Math.floor(Math.random() * QUOTES.length)]}”`;
 }

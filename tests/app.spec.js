@@ -354,6 +354,101 @@ test.describe('my ratings', () => {
   });
 });
 
+test.describe('on this day in TV', () => {
+  const widget = (page) => page.locator('[data-on-this-day]');
+  const dateLine = (page) => widget(page).locator('.otd__date');
+
+  test('shows the most popular shows that aired on this date in a past year', async ({ page }) => {
+    await page.goto('/');
+    const now = new Date();
+    await expect(dateLine(page)).toHaveText(/^\w{3} \d{1,2}, (\d{4}) · \d+ years? ago$/);
+    const [, year] = (await dateLine(page).textContent()).match(/(\d{4})/);
+    expect(Number(year)).toBeGreaterThanOrEqual(1995);
+    expect(Number(year)).toBeLessThan(now.getFullYear());
+    await expect(dateLine(page)).toContainText(`${now.getFullYear() - Number(year)} year`);
+
+    // Top three by popularity, Alpha once, no unpopular shows or news.
+    await expect(widget(page).locator('[data-otd-idx]')).toHaveText([
+      /Bravo Drama\s*S3 · E7 · Trick or Treat/,
+      /Alpha Drama\s*S1 · E3 · Pilot Part 2/,
+      /Charlie Comedy\s*S2 · E1\s*$/, // placeholder title "Episode 1" left out
+    ]);
+
+    await widget(page).getByRole('button', { name: /^Bravo Drama/ }).click();
+    await expect(page.locator('[data-modal-title]')).toHaveText('Bravo Drama');
+  });
+
+  test('"Another year" picks a different year', async ({ page }) => {
+    await page.goto('/');
+    await expect(dateLine(page)).toBeVisible();
+    const first = await dateLine(page).textContent();
+    await widget(page).getByRole('button', { name: 'Another year' }).click();
+    await expect(dateLine(page)).not.toHaveText(first);
+  });
+});
+
+test.describe('TV trivia', () => {
+  const widget = (page) => page.locator('[data-trivia]');
+  const fact = (page) => widget(page).locator('.trivia__fact');
+  const another = (page) => widget(page).getByRole('button', { name: 'Another fact' });
+
+  // Clicks through facts until `count` distinct ones have been seen.
+  async function collect(page, count) {
+    const seen = [];
+    await expect(another(page)).toBeEnabled();
+    seen.push(await fact(page).textContent());
+    while (seen.length < count) {
+      await another(page).click();
+      await expect(fact(page)).not.toHaveText(seen[seen.length - 1]);
+      await expect(another(page)).toBeEnabled();
+      seen.push(await fact(page).textContent());
+    }
+    return seen;
+  }
+
+  test('cycles through facts worked out from the home page shows', async ({ page }) => {
+    await page.goto('/');
+    const ago = new Date().getFullYear() - 2020;
+    // With an empty list, the "your list" fact is skipped, leaving 8.
+    const facts = await collect(page, 8);
+    expect(new Set(facts).size).toBe(8);
+    expect(facts).toEqual(expect.arrayContaining([
+      `The oldest show on the home page, Alpha Drama, premiered in 2020: ${ago} years ago.`,
+      'Drama is the most common genre on the home page: 3 of 4 shows (75%).',
+      'CBS has more shows on the home page than any other network or streaming service: 2 of them.',
+      'Alpha Drama is the highest-rated show on the home page, at 8.0 out of 10 on TVMaze.',
+      '25% of the shows on the home page have ended. 3 are still running.',
+      'The shows on the home page come from 2 countries. The most, 2, are from United States.',
+      'Alpha Drama has the longest episodes on the home page, averaging 60 minutes.',
+      expect.stringMatching(/^\w+ \w+ has aired 30 episodes\. Watched back-to-back, that’s 1 day and 1 hour\.$/),
+    ]));
+  });
+
+  test('includes a fact about your list once it has a couple of shows', async ({ page }) => {
+    await page.goto('/');
+    for (const name of ['Alpha Drama', 'Delta Drama']) {
+      await cards(page).filter({ hasText: name }).locator('[data-watch-toggle]').click();
+    }
+    const facts = await collect(page, 9);
+    expect(facts).toContain('1 of the 2 shows in your list is still running.');
+  });
+
+  test('show names in a fact open their details', async ({ page }) => {
+    await page.goto('/');
+    await expect(another(page)).toBeEnabled();
+    // Click until a fact names a show.
+    while (!(await fact(page).locator('[data-trivia-show]').count())) {
+      const before = await fact(page).textContent();
+      await another(page).click();
+      await expect(fact(page)).not.toHaveText(before);
+    }
+    const link = fact(page).locator('[data-trivia-show]');
+    const name = await link.textContent();
+    await link.click();
+    await expect(page.locator('[data-modal-title]')).toHaveText(name);
+  });
+});
+
 test('broken images fall back to the placeholder', async ({ page }) => {
   await page.goto('/');
   const img = cards(page).filter({ hasText: 'Delta Drama' }).locator('img');

@@ -87,20 +87,26 @@
         <ol class="widget__body" data-countdown-items></ol>
       </section>
 
-      <section class="widget glass widget--fact" aria-labelledby="ff-title">
+      <section class="widget glass widget--otd" aria-labelledby="otd-title" data-on-this-day>
         <header class="widget__header">
-          <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
-          <h2 id="ff-title" class="widget__title">Fun fact</h2>
+          <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+          <h2 id="otd-title" class="widget__title">On this day in TV</h2>
         </header>
-        <p class="widget__body" data-fun-fact>Loading…</p>
+        <div class="widget__body" data-otd-body aria-live="polite"><p class="otd__note">Loading…</p></div>
+        <button type="button" class="btn btn--ghost btn--sm widget__action" data-otd-more>
+          <i class="fa-solid fa-shuffle" aria-hidden="true"></i> Another year
+        </button>
       </section>
 
-      <section class="widget glass widget--quote" aria-labelledby="q-title">
+      <section class="widget glass widget--fact" aria-labelledby="ff-title" data-trivia>
         <header class="widget__header">
-          <i class="fa-solid fa-quote-left" aria-hidden="true"></i>
-          <h2 id="q-title" class="widget__title">Quote</h2>
+          <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+          <h2 id="ff-title" class="widget__title">TV trivia</h2>
         </header>
-        <blockquote class="widget__body" data-quote>Loading…</blockquote>
+        <div class="widget__body" data-trivia-body aria-live="polite"><p class="trivia__fact">Loading…</p></div>
+        <button type="button" class="btn btn--ghost btn--sm widget__action" data-trivia-more disabled>
+          <i class="fa-solid fa-rotate" aria-hidden="true"></i> Another fact
+        </button>
       </section>
     </aside>
 

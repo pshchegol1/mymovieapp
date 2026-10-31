@@ -10,7 +10,7 @@ A TV show browser built with plain HTML, CSS and JavaScript modules — no frame
 - **Person pages** for cast members, with every show they've been in
 - **My list** (watchlist), **My ratings** (sort, filter and a breakdown of your scores) and **Recently viewed**, saved in the browser
 - **Tonight** — what's airing in the US today
-- **Your next episodes** (for shows in My list) and **Upcoming premieres** countdowns in the sidebar
+- **Your next episodes** (for shows in My list) and **Upcoming premieres** countdowns in the sidebar, plus **On this day in TV** and **TV trivia** worked out from TVMaze data
 - Light/dark theme, keyboard accessible, respects "reduce motion"
 
 ## Running locally

@@ -17,11 +17,29 @@ function show(id, name, genres, extra = {}) {
   };
 }
 
+const CBS = { name: 'CBS', country: { name: 'United States' } };
 export const SHOWS = [
-  show(1, 'Alpha Drama', ['Drama'], { externals: { imdb: 'tt0000001', thetvdb: null } }),
-  show(2, 'Bravo Drama', ['Drama', 'Crime'], { externals: { imdb: null, thetvdb: 222 } }),
-  show(3, 'Charlie Comedy', ['Comedy']),
-  show(4, 'Delta Drama', ['Drama'], { image: { medium: BROKEN_IMG, original: BROKEN_IMG } }),
+  show(1, 'Alpha Drama', ['Drama'], { externals: { imdb: 'tt0000001', thetvdb: null }, network: CBS, averageRuntime: 60 }),
+  show(2, 'Bravo Drama', ['Drama', 'Crime'], { externals: { imdb: null, thetvdb: 222 }, network: CBS, averageRuntime: 45 }),
+  show(3, 'Charlie Comedy', ['Comedy'], { network: { name: 'BBC One', country: { name: 'United Kingdom' } }, averageRuntime: 30 }),
+  show(4, 'Delta Drama', ['Drama'], {
+    image: { medium: BROKEN_IMG, original: BROKEN_IMG },
+    webChannel: { name: 'Netflix', country: null }, status: 'Ended',
+  }),
+];
+
+// What "aired" on any past date: the widget should keep the top three by
+// popularity, list Alpha once, and drop the unpopular show and the news.
+const pastEp = (s, weight, season, number, name, extra = {}) =>
+  ({ season, number, name, show: { ...s, weight, ...extra } });
+const PAST_SCHEDULE = [
+  pastEp(SHOWS[0], 95, 1, 3, 'Pilot Part 2'),
+  pastEp(SHOWS[0], 95, 1, 4, 'Second Airing'),
+  pastEp(show(70, 'Obscure Show', ['Drama']), 10, 1, 1, 'Nobody Watched'),
+  pastEp(show(71, 'Evening News', ['News']), 99, 2007, 300, 'Episode 300', { type: 'News' }),
+  pastEp(SHOWS[1], 99, 3, 7, 'Trick or Treat'),
+  pastEp(SHOWS[2], 90, 2, 1, 'Episode 1'),
+  pastEp(SHOWS[3], 85, 1, 9, 'Fourth Place'),
 ];
 
 export const PERSON = {
@@ -56,8 +74,13 @@ export const test = base.extend({
         const q = (url.searchParams.get('q') || '').toLowerCase();
         body = SHOWS.filter((s) => s.name.toLowerCase().includes(q)).map((s) => ({ score: 1, show: s }));
       } else if (p === '/schedule') {
-        // Same premiere listed every day; the widget should show it once.
-        body = [{ season: 4, number: 1, airstamp: inHours(50), show: SHOWS[2] }];
+        const year = Number((url.searchParams.get('date') || '').slice(0, 4));
+        // Upcoming: the same premiere listed every day; the widget should show it once.
+        body = year < new Date().getFullYear()
+          ? PAST_SCHEDULE
+          : [{ season: 4, number: 1, airstamp: inHours(50), show: SHOWS[2] }];
+      } else if (/^\/shows\/\d+\/episodes$/.test(p)) {
+        body = Array.from({ length: 30 }, (_, i) => ({ id: 5000 + i, season: 1, number: i + 1, runtime: 50 }));
       } else if (/^\/shows\/\d+\/cast$/.test(p)) {
         body = [{ person: PERSON, character: { name: 'Detective Ray' } }];
       } else if (p === `/people/${PERSON.id}`) {

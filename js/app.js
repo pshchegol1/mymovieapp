@@ -14,6 +14,8 @@ import * as theme from './ui/theme.js';
 import * as toast from './ui/toast.js';
 import * as person from './ui/person.js';
 import * as ratings from './ui/ratings.js';
+import * as onThisDay from './ui/on-this-day.js';
+import * as trivia from './ui/trivia.js';
 import { renderCard, onCardEvent } from './ui/show-card.js';
 import * as router from './router.js';
 import { getWatchlist, getRecent, subscribe, clearRecent } from './storage.js';
@@ -119,9 +121,9 @@ function renderSearchStatus() {
 sidebar.init({
   nextList: $('[data-next-episodes]'),
   countdownList: $('[data-countdown-items]'),
-  funFact: $('[data-fun-fact]'),
-  quote: $('[data-quote]'),
 });
+onThisDay.init({ root: $('[data-on-this-day]') });
+trivia.init({ root: $('[data-trivia]') });
 
 footer.init({ root: $('[data-footer]'), shows: () => initialShows });
 
@@ -261,10 +263,12 @@ schedule.init({ list: $('[data-schedule-list]'), status: $('[data-schedule-statu
       refreshGrid();
     }
     carousel.setShows(catTabs.applyCategory(initialShows, 'trending').slice(0, 8));
+    trivia.setShows(initialShows);
   } catch (err) {
     console.error('Failed to load shows', err);
     grid.showError('Failed to load shows. Check your connection.');
     carousel.showError();
+    trivia.setShows([]);
   } finally {
     router.start();
   }
