@@ -28,11 +28,9 @@ function renderSlide(show, idx) {
   return `
     <div class="carousel__slide" role="group" aria-roledescription="slide" aria-label="${escapeHtml(show.name)}"
          data-slide-idx="${idx}">
-      <img class="carousel__backdrop" src="${escapeHtml(backdrop)}" alt="" loading="${loading}"
-           onerror="this.onerror=null;this.src='./img/noimg.jpg';">
+      <img class="carousel__backdrop" src="${escapeHtml(backdrop)}" alt="" loading="${loading}">
       <div class="carousel__shade"></div>
-      <img class="carousel__poster" src="${escapeHtml(poster)}" alt="" loading="${loading}"
-           onerror="this.onerror=null;this.src='./img/noimg.jpg';">
+      <img class="carousel__poster" src="${escapeHtml(poster)}" alt="" loading="${loading}">
       <div class="carousel__caption">
         ${show.genres?.length ? `<span class="carousel__caption-pill">${escapeHtml(show.genres.slice(0, 3).join(' · '))}</span>` : ''}
         <h3 class="carousel__title">${escapeHtml(show.name)}</h3>

@@ -36,8 +36,7 @@ function render(items) {
     return `
       <article class="schedule-card" data-sched-idx="${i}" tabindex="0" role="button"
                aria-label="${escapeHtml(show.name || '')} at ${escapeHtml(time)}">
-        <img class="schedule-card__img" src="${escapeHtml(img)}" alt="" loading="lazy"
-             onerror="this.onerror=null;this.src='./img/noimg.jpg';">
+        <img class="schedule-card__img" src="${escapeHtml(img)}" alt="" loading="lazy">
         <div class="schedule-card__body">
           ${time ? `<div class="schedule-card__time"><i class="fa-regular fa-clock" aria-hidden="true"></i> ${escapeHtml(time)}</div>` : ''}
           <div class="schedule-card__title">${escapeHtml(show.name || '')}</div>

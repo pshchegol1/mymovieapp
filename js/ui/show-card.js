@@ -30,7 +30,7 @@ export function renderCard(show, idx) {
              data-show-card data-show-idx="${idx}" style="--i: ${idx}">
       <div class="show-card__media">
         <img class="show-card__img" src="${escapeHtml(img)}" alt="${escapeHtml(show.name)}"
-             loading="lazy" onerror="this.onerror=null;this.src='./img/noimg.jpg';">
+             loading="lazy">
         ${rating == null ? '' : `<span class="show-card__rating"><i class="fa-solid fa-star" aria-hidden="true"></i> ${Number(rating).toFixed(1)}</span>`}
         <button type="button" class="show-card__heart${inList ? ' is-on' : ''}" data-watch-toggle
                 aria-label="${inList ? 'Remove from your list' : 'Add to your list'}"

@@ -69,7 +69,7 @@ function bodyHTML(show) {
 
   return `
     <div class="modal__top">
-      <img src="${escapeHtml(img)}" alt="${escapeHtml(show.name || '')} poster" class="modal__poster" onerror="this.onerror=null;this.src='./img/noimg.jpg';">
+      <img src="${escapeHtml(img)}" alt="${escapeHtml(show.name || '')} poster" class="modal__poster">
       <div class="modal__info">
         <div class="modal__meta-row">
           ${genres ? `<div class="modal__row"><i class="fa-solid fa-tags" aria-hidden="true"></i><span><strong>Genres:</strong> ${escapeHtml(genres)}</span></div>` : ''}
@@ -132,7 +132,7 @@ async function loadCast(showId) {
     }
     mount.innerHTML = cast.slice(0, 12).map((c) => `
       <article class="cast-card">
-        <img class="cast-card__img" loading="lazy" src="${escapeHtml(personImage(c.person))}" alt="${escapeHtml(c.person?.name || '')}" onerror="this.onerror=null;this.src='./img/noimg.jpg';">
+        <img class="cast-card__img" loading="lazy" src="${escapeHtml(personImage(c.person))}" alt="${escapeHtml(c.person?.name || '')}">
         <div class="cast-card__body">
           <div class="cast-card__name">${escapeHtml(c.person?.name || '')}</div>
           <div class="cast-card__char">${escapeHtml(c.character?.name || '')}</div>
@@ -229,7 +229,7 @@ function renderSimilar(show) {
 
   mount.innerHTML = scored.map((s) => `
     <button type="button" class="similar-card" data-similar-id="${s.id}">
-      <img loading="lazy" src="${escapeHtml(showImage(s, 'medium'))}" alt="${escapeHtml(s.name)}" onerror="this.onerror=null;this.src='./img/noimg.jpg';">
+      <img loading="lazy" src="${escapeHtml(showImage(s, 'medium'))}" alt="${escapeHtml(s.name)}">
       <div class="similar-card__name">${escapeHtml(s.name)}</div>
     </button>
   `).join('');
@@ -239,7 +239,7 @@ function renderSimilar(show) {
     const id = Number(btn.dataset.similarId);
     const next = similarPool.find((x) => x.id === id);
     if (next) open(next);
-  }, { once: true });
+  });
 }
 
 async function onBodyClick(e) {

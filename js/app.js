@@ -1,5 +1,5 @@
 import { $, $$ } from './util/dom.js';
-import { fetchShows, fetchShow } from './api.js';
+import { fetchShows, fetchShow, FALLBACK_IMG } from './api.js';
 import * as grid from './ui/grid.js';
 import * as carousel from './ui/carousel.js';
 import * as search from './ui/search.js';
@@ -20,6 +20,13 @@ let initialShows = [];
 let activeCategory = 'trending';
 let searchResults = null;
 let searchQuery = '';
+
+// Swap any broken image for the placeholder. Image errors don't bubble, so
+// listen in the capture phase; the src check stops a loop if the fallback fails too.
+document.addEventListener('error', (e) => {
+  const img = e.target;
+  if (img instanceof HTMLImageElement && img.getAttribute('src') !== FALLBACK_IMG) img.src = FALLBACK_IMG;
+}, true);
 
 modal.init();
 

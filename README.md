@@ -17,12 +17,22 @@ A TV show browser built with plain HTML, CSS and JavaScript modules — no frame
 The app uses ES modules, so it must be served over HTTP (opening `index.html` directly from disk won't work). From the project folder, either:
 
 ```sh
-python3 -m http.server 8000
+npm run serve            # http://localhost:8765, no dependencies needed
 # or
-npx serve .
+python3 -m http.server 8000
 ```
 
-then open http://localhost:8000.
+then open the printed address.
+
+## Tests
+
+End-to-end tests use [Playwright](https://playwright.dev) with the TVMaze API mocked, so they don't need the network:
+
+```sh
+npm install
+npx playwright install chromium   # first time only
+npm test
+```
 
 ## URLs
 
