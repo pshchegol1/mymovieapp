@@ -16,7 +16,7 @@ function renderSlide(show, idx) {
   const backdrop = showImage(show, 'original');
   const poster = showImage(show, 'medium');
   const rating = show.rating?.average;
-  const year = show.premiered ? new Date(show.premiered).getFullYear() : null;
+  const year = show.premiered ? show.premiered.slice(0, 4) : null;
   const network = show.network?.name || show.webChannel?.name;
   const meta = [
     rating != null ? `<span><i class="fa-solid fa-star" aria-hidden="true"></i> ${Number(rating).toFixed(1)}</span>` : '',

@@ -1,0 +1,43 @@
+.person__header {
+  display: flex;
+  gap: var(--space-5);
+  align-items: flex-start;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+}
+.person__photo {
+  flex: 0 0 auto;
+  width: 160px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  background: hsl(var(--n-100));
+  box-shadow: var(--shadow-1);
+}
+.person__info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.person__name { margin-bottom: var(--space-1); }
+.person__name:focus, .person__name:focus-visible { outline: none; box-shadow: none; }
+.person__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+.person__row i { width: 1.1em; color: hsl(var(--h-blue) / 0.8); }
+.person__count, .person__loading {
+  font-size: var(--fs-sm);
+  color: var(--color-text-soft);
+}
+
+@media (max-width: 599px) {
+  .person__header { flex-direction: column; align-items: center; text-align: center; padding: var(--space-4); }
+  .person__info { align-items: center; }
+  .person__photo { width: 140px; }
+}

@@ -12,6 +12,7 @@ import * as sort from './ui/sort.js';
 import * as schedule from './ui/schedule.js';
 import * as theme from './ui/theme.js';
 import * as toast from './ui/toast.js';
+import * as person from './ui/person.js';
 import { renderCard, onCardEvent } from './ui/show-card.js';
 import * as router from './router.js';
 import { getWatchlist, getRecent, subscribe, clearRecent } from './storage.js';
@@ -122,6 +123,8 @@ sidebar.init({
 
 footer.init({ root: $('[data-footer]'), shows: () => initialShows });
 
+person.init({ header: $('[data-person-header]'), grid: $('[data-person-grid]') });
+
 const recentClearBtn = $('[data-recent-clear]');
 if (recentClearBtn) recentClearBtn.addEventListener('click', () => clearRecent());
 
@@ -188,6 +191,7 @@ function setView(view) {
     el.classList.toggle('is-active', el.dataset.nav === view);
   });
   if (view !== 'home') modal.close();
+  if (view !== 'person') person.cancel();
   // Only jump to the top on an actual page change (not e.g. closing a show).
   if (view !== currentView) window.scrollTo({ top: 0, behavior: 'auto' });
   currentView = view;
@@ -227,6 +231,7 @@ router.on('search', ({ query }) => {
 router.on('watchlist', () => { setView('watchlist'); renderWatchlist(); });
 router.on('recent', () => { setView('recent'); renderRecent(); });
 router.on('schedule', () => { setView('schedule'); });
+router.on('person/:id', ({ params }) => { setView('person'); person.load(params.id); });
 router.on('show/:id', ({ params }) => {
   setView('home');
   openShowById(params.id);

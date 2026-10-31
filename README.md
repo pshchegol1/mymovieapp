@@ -46,6 +46,7 @@ Navigation is hash-based, so every view can be bookmarked or shared and the Back
 | `#/watchlist` | My list |
 | `#/recent` | Recently viewed |
 | `#/schedule` | Tonight |
+| `#/person/50` | A cast member's details and shows (works for any TVMaze person id) |
 
 ## Project structure
 

@@ -9,6 +9,17 @@ test('browse grid lists shows', async ({ page }) => {
   await expect(page.locator('[data-result-count]')).toHaveText(`${SHOWS.length} shows`);
 });
 
+test.describe('west of UTC', () => {
+  test.use({ timezoneId: 'America/New_York' });
+
+  test('a Jan 1 premiere shows and filters as that year', async ({ page }) => {
+    await page.goto('/');
+    await expect(cards(page).first().locator('.show-card__premiered')).toHaveText('2020');
+    await page.locator('[data-year-select]').selectOption('2020');
+    await expect(cards(page)).toHaveCount(SHOWS.length);
+  });
+});
+
 test('search updates the URL and filters results', async ({ page }) => {
   await page.goto('/');
   await page.locator('[data-search-input]').fill('drama');
@@ -93,6 +104,45 @@ test('season tabs follow the ARIA tabs pattern', async ({ page }) => {
 
   await tabs.nth(2).click();
   await expect(panel).toContainText('Season 3 opener');
+});
+
+test.describe('person pages', () => {
+  test('a cast member links to their page, and Back returns to the show', async ({ page }) => {
+    await page.goto('/');
+    await cards(page).filter({ hasText: 'Bravo Drama' }).click();
+    await page.locator('[data-cast] a', { hasText: 'Jamie Example' }).click();
+
+    await expect(page).toHaveURL(/#\/person\/50$/);
+    await expect(modal(page)).toBeHidden();
+    const view = page.locator('[data-view="person"]');
+    await expect(view.getByRole('heading', { name: 'Jamie Example' })).toBeFocused();
+    await expect(view).toContainText('Canada');
+    await expect(view).toContainText('May 15, 1970');
+    await expect(view).toContainText('2 shows');
+    // Show 1 appears once despite two credits.
+    await expect(view.locator('[data-show-card]')).toHaveText([/Alpha Drama/, /Charlie Comedy/]);
+
+    await page.goBack();
+    await expect(modal(page)).toBeVisible();
+    await expect(page.locator('[data-modal-title]')).toHaveText('Bravo Drama');
+  });
+
+  test('show cards on a person page open details and toggle the watchlist', async ({ page }) => {
+    await page.goto('/#/person/50');
+    const grid = page.locator('[data-person-grid]');
+    const card = grid.locator('[data-show-card]', { hasText: 'Charlie Comedy' });
+    await card.locator('[data-watch-toggle]').click();
+    await expect(card.locator('[data-watch-toggle]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-watchlist-count]')).toHaveText('1');
+
+    await card.click();
+    await expect(page.locator('[data-modal-title]')).toHaveText('Charlie Comedy');
+  });
+
+  test('an unknown person shows an error', async ({ page }) => {
+    await page.goto('/#/person/999');
+    await expect(page.locator('[data-view="person"]')).toContainText('Couldn’t load this person');
+  });
 });
 
 test('broken images fall back to the placeholder', async ({ page }) => {

@@ -130,14 +130,16 @@ async function loadCast(showId) {
       mount.innerHTML = '<p class="cast__empty">No cast info available.</p>';
       return;
     }
+    // Each card links to the person's page; the modal closes on the hash change,
+    // and Back returns to this show.
     mount.innerHTML = cast.slice(0, 12).map((c) => `
-      <article class="cast-card">
-        <img class="cast-card__img" loading="lazy" src="${escapeHtml(personImage(c.person))}" alt="${escapeHtml(c.person?.name || '')}">
+      <a class="cast-card" href="#/person/${Number(c.person?.id)}">
+        <img class="cast-card__img" loading="lazy" src="${escapeHtml(personImage(c.person))}" alt="">
         <div class="cast-card__body">
           <div class="cast-card__name">${escapeHtml(c.person?.name || '')}</div>
           <div class="cast-card__char">${escapeHtml(c.character?.name || '')}</div>
         </div>
-      </article>
+      </a>
     `).join('');
   } catch (err) {
     console.error(err);

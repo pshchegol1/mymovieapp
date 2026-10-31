@@ -20,7 +20,9 @@ function heartIcon(inList) {
 export function renderCard(show, idx) {
   const img = showImage(show, 'medium');
   const rating = show.rating?.average;
-  const premiered = show.premiered ? new Date(show.premiered).getFullYear() : '—';
+  // Read the year straight from "YYYY-MM-DD": new Date() would parse it as UTC,
+  // which is the previous day (and year, on Jan 1) west of Greenwich.
+  const premiered = show.premiered ? show.premiered.slice(0, 4) : '—';
   const inList = isInWatchlist(show.id);
   const myRating = getRating(show.id);
 

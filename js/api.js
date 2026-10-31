@@ -41,6 +41,15 @@ export async function fetchSeasonEpisodes(seasonId) {
   return getJSON(`${BASE}/seasons/${seasonId}/episodes`);
 }
 
+export async function fetchPerson(id) {
+  return getJSON(`${BASE}/people/${id}`);
+}
+
+// Every show a person has a cast role in, with the show embedded in each credit.
+export async function fetchPersonCredits(id) {
+  return getJSON(`${BASE}/people/${id}/castcredits?embed=show`);
+}
+
 // YYYY-MM-DD in the user's local time zone, `offsetDays` from today.
 // (toISOString() would give the UTC date, which is already tomorrow on US evenings.)
 export function localDate(offsetDays = 0) {

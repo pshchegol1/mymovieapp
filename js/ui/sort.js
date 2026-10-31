@@ -16,7 +16,7 @@ function buildYearOptions(shows) {
   const years = new Set();
   for (const s of shows) {
     if (!s.premiered) continue;
-    const y = new Date(s.premiered).getFullYear();
+    const y = Number(s.premiered.slice(0, 4));
     if (y) years.add(y);
   }
   const arr = [...years].sort((a, b) => b - a);
@@ -48,7 +48,7 @@ export function setShows(shows) {
 export function apply(shows) {
   let out = [...shows];
   if (state.year !== 'all') {
-    out = out.filter((s) => s.premiered && String(new Date(s.premiered).getFullYear()) === state.year);
+    out = out.filter((s) => s.premiered && s.premiered.slice(0, 4) === state.year);
   }
   switch (state.sort) {
     case 'rating': out.sort((a, b) => (b.rating?.average ?? 0) - (a.rating?.average ?? 0)); break;

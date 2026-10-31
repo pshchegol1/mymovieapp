@@ -24,6 +24,12 @@ export const SHOWS = [
   show(4, 'Delta Drama', ['Drama'], { image: { medium: BROKEN_IMG, original: BROKEN_IMG } }),
 ];
 
+export const PERSON = {
+  id: 50, name: 'Jamie Example', birthday: '1970-05-15', deathday: null,
+  country: { name: 'Canada' }, url: 'https://www.tvmaze.com/people/50/jamie-example',
+  image: { medium: 'https://static.tvmaze.com/p50.jpg' },
+};
+
 // Serve TVMaze from fixtures and block other third-party requests, so tests
 // are fast and don't depend on the network or live data.
 export const test = base.extend({
@@ -41,6 +47,15 @@ export const test = base.extend({
       else if (p === '/search/shows') {
         const q = (url.searchParams.get('q') || '').toLowerCase();
         body = SHOWS.filter((s) => s.name.toLowerCase().includes(q)).map((s) => ({ score: 1, show: s }));
+      } else if (/^\/shows\/\d+\/cast$/.test(p)) {
+        body = [{ person: PERSON, character: { name: 'Detective Ray' } }];
+      } else if (p === `/people/${PERSON.id}`) {
+        body = PERSON;
+      } else if (p === `/people/${PERSON.id}/castcredits`) {
+        // Two roles in show 1, which the page should list only once.
+        body = [SHOWS[0], SHOWS[0], SHOWS[2]].map((s) => ({ self: false, voice: false, _embedded: { show: s } }));
+      } else if (/^\/people\/\d+/.test(p)) {
+        return route.fulfill({ status: 404, json: {} });
       } else if (/^\/shows\/\d+\/seasons$/.test(p)) {
         body = [{ id: 11, number: 1 }, { id: 12, number: 2 }, { id: 13, number: 3 }];
       } else if (/^\/seasons\/\d+\/episodes$/.test(p)) {
