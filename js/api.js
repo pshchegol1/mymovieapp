@@ -4,9 +4,19 @@ const BASE = 'https://api.tvmaze.com';
 const TMDB = 'https://api.themoviedb.org/3';
 
 const cache = new Map();
+const MAX_RETRIES = 3;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 async function getJSON(url) {
   if (cache.has(url)) return cache.get(url);
-  const res = await fetch(url);
+  let res;
+  // TVMaze allows ~20 requests per 10s and answers 429 beyond that; wait and retry.
+  for (let attempt = 0; ; attempt++) {
+    res = await fetch(url);
+    if (res.status !== 429 || attempt === MAX_RETRIES) break;
+    const retryAfter = Number(res.headers.get('Retry-After'));
+    await sleep(retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** attempt);
+  }
   if (!res.ok) throw new Error(`${url} ${res.status}`);
   const data = await res.json();
   cache.set(url, data);
@@ -30,6 +40,12 @@ export async function searchShows(query) {
 
 export async function fetchShow(id) {
   return getJSON(`${BASE}/shows/${id}`);
+}
+
+// The show's next scheduled episode, or null if none is announced.
+export async function fetchNextEpisode(id) {
+  const show = await getJSON(`${BASE}/shows/${id}?embed=nextepisode`);
+  return show._embedded?.nextepisode ?? null;
 }
 
 export async function fetchCast(id) {

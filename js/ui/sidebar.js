@@ -1,5 +1,7 @@
 import { escapeHtml } from '../util/dom.js';
-import { fetchSchedule, localDate } from '../api.js';
+import { fetchSchedule, fetchNextEpisode, localDate } from '../api.js';
+import { getWatchlist, subscribe } from '../storage.js';
+import { episodeLabel } from '../util/episode.js';
 import * as modal from './modal.js';
 
 const FUN_FACTS = [
@@ -27,7 +29,14 @@ const DAYS_PER_BATCH = 3;
 const BAR_WINDOW_MS = 7 * 86400000; // the bar fills over the final week
 const SKIP_TYPES = new Set(['Sports', 'News', 'Talk Show']);
 
+const NEXT_COUNT = 5;
+const NEXT_LOOKUP_MAX = 20; // watchlist shows checked, to stay inside TVMaze's rate limit
+const NEXT_CONCURRENCY = 3;
+
 let premieres = [];
+let nextEps = [];
+let nextKey = null;
+let nextReq = 0;
 
 // Next few season premieres (episode 1) airing in the US, soonest first.
 // Days are fetched a few at a time and we stop as soon as we have enough.
@@ -64,60 +73,138 @@ function barPercent(airs) {
   return Math.min(100, Math.max(0, (1 - remaining / BAR_WINDOW_MS) * 100));
 }
 
-function renderPremieres(listEl) {
-  listEl.innerHTML = premieres.map((p, i) => {
-    const date = new Date(p.airs).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-    const label = `${p.show.name}, season ${p.season} premieres ${date}. Open details`;
-    return `
+const shortDate = (ms) => new Date(ms).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+
+function note(listEl, text) {
+  listEl.innerHTML = `<li class="countdown-item countdown-item--note">${escapeHtml(text)}</li>`;
+}
+
+// One countdown row; `sub` is the small line under the title.
+function countdownItemHTML(idx, title, sub, label) {
+  return `
     <li class="countdown-item">
-      <button type="button" class="countdown-item__title" data-premiere-idx="${i}"
+      <button type="button" class="countdown-item__title" data-countdown-idx="${idx}"
               aria-label="${escapeHtml(label)}">
-        ${escapeHtml(p.show.name)} <span class="countdown-item__season">S${escapeHtml(p.season)} · ${escapeHtml(date)}</span>
+        ${escapeHtml(title)} <span class="countdown-item__season">${escapeHtml(sub)}</span>
       </button>
-      <span class="countdown-item__time" data-premiere-time></span>
-      <div class="countdown-item__bar"><div class="countdown-item__fill" data-premiere-fill></div></div>
+      <span class="countdown-item__time" data-countdown-time></span>
+      <div class="countdown-item__bar"><div class="countdown-item__fill" data-countdown-fill></div></div>
     </li>`;
-  }).join('');
 }
 
 // Update only the changing text/bar widths instead of rebuilding the list.
-function tickPremieres(listEl) {
-  if (document.hidden) return;
-  listEl.querySelectorAll('.countdown-item').forEach((item, i) => {
-    const p = premieres[i];
+function tick(listEl, items) {
+  listEl.querySelectorAll('[data-countdown-idx]').forEach((btn) => {
+    const p = items[Number(btn.dataset.countdownIdx)];
+    if (!p) return;
+    const item = btn.closest('.countdown-item');
     const left = timeLeft(p.airs);
-    const timeEl = item.querySelector('[data-premiere-time]');
+    const timeEl = item.querySelector('[data-countdown-time]');
     timeEl.textContent = left || 'Airing now';
     timeEl.classList.toggle('countdown-item__time--live', !left);
-    item.querySelector('[data-premiere-fill]').style.width = `${barPercent(p.airs)}%`;
+    item.querySelector('[data-countdown-fill]').style.width = `${barPercent(p.airs)}%`;
   });
 }
 
-async function initCountdown(listEl) {
-  listEl.innerHTML = '<li class="countdown-item countdown-item--note">Loading premieres…</li>';
-  try {
-    premieres = await loadPremieres();
-  } catch (err) {
-    console.error(err);
-    listEl.innerHTML = '<li class="countdown-item countdown-item--note">Couldn’t load upcoming premieres.</li>';
-    return;
-  }
-  if (!premieres.length) {
-    listEl.innerHTML = '<li class="countdown-item countdown-item--note">No premieres in the next two weeks.</li>';
-    return;
-  }
-  renderPremieres(listEl);
-  tickPremieres(listEl);
-  setInterval(() => tickPremieres(listEl), 1000);
+// Clicking a row opens that show; `items` is read at click time since lists reload.
+function openOnClick(listEl, items) {
   listEl.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-premiere-idx]');
-    const p = btn && premieres[Number(btn.dataset.premiereIdx)];
+    const btn = e.target.closest('[data-countdown-idx]');
+    const p = btn && items()[Number(btn.dataset.countdownIdx)];
     if (p) modal.open(p.show, btn);
   });
 }
 
-export function init({ countdownList, funFact, quote }) {
-  initCountdown(countdownList);
+async function initPremieres(listEl) {
+  note(listEl, 'Loading premieres…');
+  try {
+    premieres = await loadPremieres();
+  } catch (err) {
+    console.error(err);
+    note(listEl, 'Couldn’t load upcoming premieres.');
+    return;
+  }
+  if (!premieres.length) {
+    note(listEl, 'No premieres in the next two weeks.');
+    return;
+  }
+  listEl.innerHTML = premieres.map((p, i) => {
+    const date = shortDate(p.airs);
+    return countdownItemHTML(i, p.show.name, `S${p.season} · ${date}`,
+      `${p.show.name}, season ${p.season} premieres ${date}. Open details`);
+  }).join('');
+  tick(listEl, premieres);
+}
+
+// Run `fn` over `items` with at most `limit` calls in flight.
+async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) { const i = next++; out[i] = await fn(items[i]); }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
+// Next episode of each show in My list, soonest first. Re-runs whenever storage
+// changes, but only refetches when the set of shows to check has changed.
+async function loadNextEpisodes(listEl) {
+  const shows = getWatchlist().filter((s) => s.status !== 'Ended').slice(0, NEXT_LOOKUP_MAX);
+  const key = shows.map((s) => s.id).join(',');
+  if (key === nextKey) return;
+  nextKey = key;
+  const reqId = ++nextReq;
+  if (!shows.length) {
+    nextEps = [];
+    note(listEl, 'Add shows to My list to see when their next episodes air.');
+    return;
+  }
+  if (!nextEps.length) note(listEl, 'Loading…');
+
+  let failed = 0;
+  const eps = await mapLimit(shows, NEXT_CONCURRENCY, async (show) => {
+    try { return await fetchNextEpisode(show.id); } catch (err) { console.error(err); failed++; return null; }
+  });
+  // My list changed again while these were loading.
+  if (reqId !== nextReq) return;
+
+  const now = Date.now();
+  nextEps = shows
+    .map((show, i) => ({ show, ep: eps[i], airs: Date.parse(eps[i]?.airstamp) }))
+    .filter((x) => x.airs > now)
+    .sort((a, b) => a.airs - b.airs)
+    .slice(0, NEXT_COUNT);
+  if (!nextEps.length) {
+    note(listEl, failed === shows.length
+      ? 'Couldn’t load your next episodes.'
+      : 'No upcoming episodes announced for your shows.');
+    return;
+  }
+  listEl.innerHTML = nextEps.map((x, i) => {
+    const date = shortDate(x.airs);
+    const code = episodeLabel(x.ep);
+    return countdownItemHTML(i, x.show.name, [code, date].filter(Boolean).join(' · '),
+      `${x.show.name}, ${code ? `${code} ` : ''}airs ${date}. Open details`);
+  }).join('');
+  tick(listEl, nextEps);
+}
+
+export function init({ nextList, countdownList, funFact, quote }) {
+  initPremieres(countdownList);
+  openOnClick(countdownList, () => premieres);
+
+  if (nextList) {
+    loadNextEpisodes(nextList);
+    subscribe(() => loadNextEpisodes(nextList));
+    openOnClick(nextList, () => nextEps);
+  }
+
+  setInterval(() => {
+    if (document.hidden) return;
+    tick(countdownList, premieres);
+    if (nextList) tick(nextList, nextEps);
+  }, 1000);
 
   funFact.textContent = FUN_FACTS[Math.floor(Math.random() * FUN_FACTS.length)];
   quote.textContent = `“${QUOTES[Math.floor(Math.random() * QUOTES.length)]}”`;

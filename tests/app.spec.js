@@ -205,6 +205,76 @@ test.describe('trailers', () => {
   });
 });
 
+test.describe('next-episode countdown', () => {
+  const widget = (page) => page.locator('[data-next-episodes]');
+  const heart = (page, name) => cards(page).filter({ hasText: name }).locator('[data-watch-toggle]');
+
+  test('lists My list shows by next air date and updates with the list', async ({ page }) => {
+    await page.goto('/');
+    await expect(widget(page)).toContainText('Add shows to My list');
+
+    // Show 4's episode already aired and show 3 has none, so only 1 and 2 appear.
+    for (const name of ['Alpha Drama', 'Bravo Drama', 'Charlie Comedy', 'Delta Drama']) {
+      await heart(page, name).click();
+    }
+    const rows = widget(page).locator('[data-countdown-idx]');
+    await expect(rows).toHaveText([/Bravo Drama\s*S1 · E9/, /Alpha Drama\s*S2 · E5/]);
+    await expect(widget(page).locator('[data-countdown-time]').first()).toHaveText(/^01d 0[12]h \d\dm \d\ds$/);
+
+    await rows.first().click();
+    await expect(page.locator('[data-modal-title]')).toHaveText('Bravo Drama');
+    await page.keyboard.press('Escape');
+
+    await heart(page, 'Bravo Drama').click();
+    await expect(rows).toHaveText([/Alpha Drama/]);
+  });
+
+  test('upcoming premieres still count down and open details', async ({ page }) => {
+    await page.goto('/');
+    const premieres = page.locator('[data-countdown-items]');
+    await expect(premieres.locator('[data-countdown-idx]')).toHaveText([/Charlie Comedy\s*S4 · /]);
+    await expect(premieres.locator('[data-countdown-time]')).toHaveText(/^02d 0[12]h \d\dm \d\ds$/);
+    await premieres.locator('[data-countdown-idx]').click();
+    await expect(page.locator('[data-modal-title]')).toHaveText('Charlie Comedy');
+  });
+
+  test('says so when no shows in My list have an upcoming episode', async ({ page }) => {
+    await page.goto('/');
+    await heart(page, 'Charlie Comedy').click();
+    await expect(widget(page)).toContainText('No upcoming episodes announced');
+  });
+
+  test('show details include the next episode', async ({ page }) => {
+    await page.goto('/#/show/1');
+    const row = page.locator('[data-next-ep]');
+    await expect(row).toBeVisible();
+    await expect(row).toContainText('Next episode: S2 · E5 · The Return');
+    await expect(row).toContainText('(in 3 days)');
+
+    // Placeholder titles like "Episode 9" are left out.
+    await page.goto('/#/show/2');
+    await expect(row).toContainText(/Next episode: S1 · E9 · \w{3}, /);
+    await expect(row).not.toContainText('Episode 9');
+
+    await page.goto('/#/show/3');
+    await expect(page.locator('[data-modal-title]')).toHaveText('Charlie Comedy');
+    await expect(row).toBeHidden();
+  });
+
+  test('retries TVMaze requests that hit the rate limit', async ({ page }) => {
+    let calls = 0;
+    await page.route('https://api.tvmaze.com/shows/1?embed=nextepisode', (route) => {
+      calls++;
+      return calls === 1
+        ? route.fulfill({ status: 429, headers: { 'Retry-After': '1' }, json: {} })
+        : route.fallback();
+    });
+    await page.goto('/#/show/1');
+    await expect(page.locator('[data-next-ep]')).toContainText('S2 · E5', { timeout: 5000 });
+    expect(calls).toBe(2);
+  });
+});
+
 test('broken images fall back to the placeholder', async ({ page }) => {
   await page.goto('/');
   const img = cards(page).filter({ hasText: 'Delta Drama' }).locator('img');

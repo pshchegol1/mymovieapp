@@ -1,5 +1,6 @@
 import { escapeHtml, stripTags } from '../util/dom.js';
 import { showImage, fetchSchedule } from '../api.js';
+import { episodeText } from '../util/episode.js';
 import * as modal from './modal.js';
 
 let listEl, statusEl;
@@ -9,18 +10,6 @@ function fmtTime(t) {
   const [h, m] = t.split(':').map(Number);
   const d = new Date(); d.setHours(h, m, 0, 0);
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-// Daily shows use the year as the season ("S2026E211"), which reads badly.
-function episodeLabel(ep) {
-  if (!ep.number) return '';
-  if (!ep.season || ep.season >= 1900) return `Ep ${ep.number}`;
-  return `S${ep.season} · E${ep.number}`;
-}
-
-function episodeText(ep) {
-  const generic = /^Episode \d+$/i.test(ep.name || '');
-  return [episodeLabel(ep), generic ? '' : ep.name].filter(Boolean).join(' · ');
 }
 
 function render(items) {

@@ -116,6 +116,7 @@ function renderSearchStatus() {
 }
 
 sidebar.init({
+  nextList: $('[data-next-episodes]'),
   countdownList: $('[data-countdown-items]'),
   funFact: $('[data-fun-fact]'),
   quote: $('[data-quote]'),

@@ -30,6 +30,14 @@ export const PERSON = {
   image: { medium: 'https://static.tvmaze.com/p50.jpg' },
 };
 
+// Next episodes, timed relative to "now" (show 3 has none announced).
+const inHours = (h) => new Date(Date.now() + h * 3600000).toISOString();
+export const NEXT_EPISODES = {
+  1: () => ({ season: 2, number: 5, name: 'The Return', airstamp: inHours(3 * 24 + 2) }),
+  2: () => ({ season: 1, number: 9, name: 'Episode 9', airstamp: inHours(26) }),
+  4: () => ({ season: 3, number: 1, name: 'Aired Already', airstamp: inHours(-5) }),
+};
+
 // Serve TVMaze from fixtures and block other third-party requests, so tests
 // are fast and don't depend on the network or live data.
 export const test = base.extend({
@@ -47,6 +55,9 @@ export const test = base.extend({
       else if (p === '/search/shows') {
         const q = (url.searchParams.get('q') || '').toLowerCase();
         body = SHOWS.filter((s) => s.name.toLowerCase().includes(q)).map((s) => ({ score: 1, show: s }));
+      } else if (p === '/schedule') {
+        // Same premiere listed every day; the widget should show it once.
+        body = [{ season: 4, number: 1, airstamp: inHours(50), show: SHOWS[2] }];
       } else if (/^\/shows\/\d+\/cast$/.test(p)) {
         body = [{ person: PERSON, character: { name: 'Detective Ray' } }];
       } else if (p === `/people/${PERSON.id}`) {
@@ -64,6 +75,9 @@ export const test = base.extend({
       } else if (/^\/shows\/\d+$/.test(p)) {
         body = SHOWS.find((s) => s.id === Number(p.split('/')[2]));
         if (!body) return route.fulfill({ status: 404, json: {} });
+        if (url.searchParams.get('embed') === 'nextepisode' && NEXT_EPISODES[body.id]) {
+          body = { ...body, _embedded: { nextepisode: NEXT_EPISODES[body.id]() } };
+        }
       }
       return route.fulfill({ json: body });
     });

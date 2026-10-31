@@ -1,5 +1,6 @@
 import { $, escapeHtml, stripTags } from '../util/dom.js';
-import { showImage, personImage, fetchCast, fetchSeasons, fetchSeasonEpisodes, fetchTrailerKey, hasTrailerSource } from '../api.js';
+import { showImage, personImage, fetchCast, fetchSeasons, fetchSeasonEpisodes, fetchNextEpisode, fetchTrailerKey, hasTrailerSource } from '../api.js';
+import { episodeText, relativeTime } from '../util/episode.js';
 import { isInWatchlist, toggleWatchlist, getRating, setRating, pushRecent, subscribe } from '../storage.js';
 import * as toast from './toast.js';
 
@@ -77,6 +78,7 @@ function bodyHTML(show) {
           ${network ? `<div class="modal__row"><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i><span><strong>Network:</strong> ${escapeHtml(network)}</span></div>` : ''}
           ${runtime ? `<div class="modal__row"><i class="fa-solid fa-clock" aria-hidden="true"></i><span><strong>Runtime:</strong> ${escapeHtml(runtime)} min</span></div>` : ''}
           ${show.status ? `<div class="modal__row"><i class="fa-solid fa-signal" aria-hidden="true"></i><span><strong>Status:</strong> ${escapeHtml(show.status)}</span></div>` : ''}
+          <div class="modal__row" data-next-ep hidden></div>
         </div>
         <div class="modal__actions">
           <button type="button" class="btn btn--primary btn--sm" data-action="watchlist" aria-pressed="${inList}">
@@ -145,6 +147,24 @@ async function loadCast(showId) {
     console.error(err);
     mount.innerHTML = '<p class="cast__empty">Couldn’t load cast.</p>';
   }
+}
+
+async function loadNextEpisode(show) {
+  const row = bodyEl.querySelector('[data-next-ep]');
+  if (!row || show.status === 'Ended') return;
+  let ep = null;
+  try {
+    ep = await fetchNextEpisode(show.id);
+  } catch (err) {
+    console.error(err);
+  }
+  const airs = Date.parse(ep?.airstamp);
+  // Nothing upcoming, or the modal moved on while this loaded.
+  if (!(airs > Date.now()) || currentShow !== show) return;
+  const when = new Date(airs).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  row.innerHTML = `<i class="fa-solid fa-forward" aria-hidden="true"></i>
+    <span><strong>Next episode:</strong> ${escapeHtml(episodeText(ep))} · ${escapeHtml(when)} (${escapeHtml(relativeTime(airs))})</span>`;
+  row.hidden = false;
 }
 
 async function loadSeasons(showId) {
@@ -403,6 +423,7 @@ export function open(show, triggerEl) {
   if (show.id) {
     loadCast(show.id);
     loadSeasons(show.id);
+    loadNextEpisode(show);
   }
   renderSimilar(show);
 
