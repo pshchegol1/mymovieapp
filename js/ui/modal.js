@@ -367,7 +367,7 @@ async function onBodyClick(e) {
   const rateBtn = e.target.closest('[data-rate]');
   if (rateBtn) {
     const v = Number(rateBtn.dataset.rate);
-    setRating(show.id, v);
+    setRating(show, v);
     const current = getRating(show.id);
     const rateRoot = bodyEl.querySelector('.rate');
     if (rateRoot) rateRoot.outerHTML = ratingStars(current);

@@ -1,0 +1,97 @@
+.ratings-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+}
+.ratings-stats__numbers {
+  display: flex;
+  gap: var(--space-5);
+  margin: 0;
+}
+.ratings-stat dt {
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+}
+.ratings-stat dd {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Score histogram: one series, so one hue and no legend. */
+.ratings-hist {
+  flex: 1 1 16rem;
+  max-width: 24rem;
+  margin: 0 0 0 auto;
+}
+.ratings-hist__title {
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+  margin-bottom: var(--space-2);
+}
+.ratings-hist__bars,
+.ratings-hist__axis {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+}
+.ratings-hist__bars {
+  height: 4.5rem;
+  align-items: end;
+  border-bottom: 1px solid var(--color-border-hairline);
+}
+.ratings-hist__bar {
+  position: relative;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+/* The visible bar is drawn inside the full-height button so the hit target is bigger than the mark. */
+.ratings-hist__bar::before {
+  content: '';
+  position: absolute;
+  inset: auto 15% 0;
+  height: var(--h);
+  border-radius: 4px 4px 0 0;
+  background: hsl(var(--h-blue) / 0.75);
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.ratings-hist__bar:disabled { cursor: default; }
+.ratings-hist__bar:not(:disabled):hover::before { background: hsl(var(--h-blue)); }
+.ratings-hist__bar[aria-pressed="true"]::before { background: hsl(var(--h-violet)); }
+.ratings-hist__tip {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  background: hsl(var(--n-900));
+  color: white;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+  z-index: 1;
+}
+.ratings-hist__bar:hover .ratings-hist__tip,
+.ratings-hist__bar:focus-visible .ratings-hist__tip { opacity: 1; }
+.ratings-hist__axis span {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--color-text-soft);
+  padding-top: 2px;
+}
+
+@media (max-width: 599px) {
+  .ratings-stats { padding: var(--space-4); }
+  .ratings-hist { margin-left: 0; max-width: none; }
+}

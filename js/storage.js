@@ -2,6 +2,7 @@ const KEYS = {
   watchlist: 'mm.watchlist',
   recent: 'mm.recent',
   ratings: 'mm.ratings',
+  rated: 'mm.rated',
   theme: 'mm.theme',
 };
 
@@ -74,11 +75,43 @@ export function getRating(id) {
   const all = readJSON(KEYS.ratings, {});
   return all[id] || 0;
 }
-export function setRating(id, value) {
+// Scores live in KEYS.ratings as { id: score }; KEYS.rated keeps a copy of each
+// rated show (and when it was rated) so the ratings page can list them.
+export function setRating(show, value) {
   const all = readJSON(KEYS.ratings, {});
-  if (!value) delete all[id];
-  else all[id] = Math.max(1, Math.min(10, Number(value)));
+  const rated = readJSON(KEYS.rated, {});
+  if (!value) {
+    delete all[show.id];
+    delete rated[show.id];
+  } else {
+    all[show.id] = Math.max(1, Math.min(10, Number(value)));
+    rated[show.id] = { show: showSnapshot(show), ratedAt: Date.now() };
+  }
   writeJSON(KEYS.ratings, all);
+  writeJSON(KEYS.rated, rated);
+  emit();
+}
+
+// Every rating as { id, value, show, ratedAt }. `show` is null for ratings made
+// before copies were kept (see saveRatedShows); their `ratedAt` is null too.
+export function getRatedShows() {
+  const rated = readJSON(KEYS.rated, {});
+  return Object.entries(getRatings()).map(([id, value]) => ({
+    id: Number(id),
+    value,
+    show: rated[id]?.show ?? null,
+    ratedAt: rated[id]?.ratedAt ?? null,
+  }));
+}
+
+// Back-fill copies for older ratings, leaving their (unknown) rating date alone.
+export function saveRatedShows(shows) {
+  const all = getRatings();
+  const rated = readJSON(KEYS.rated, {});
+  for (const show of shows) {
+    if (all[show.id]) rated[show.id] = { show: showSnapshot(show), ratedAt: rated[show.id]?.ratedAt ?? null };
+  }
+  writeJSON(KEYS.rated, rated);
   emit();
 }
 

@@ -43,6 +43,9 @@
         <i class="fa-solid fa-heart" aria-hidden="true"></i><span>My list</span>
         <span class="primary-nav__badge" data-watchlist-count hidden></span>
       </a>
+      <a class="primary-nav__link" href="#/ratings" data-nav="ratings">
+        <i class="fa-solid fa-star" aria-hidden="true"></i><span>Ratings</span>
+      </a>
       <a class="primary-nav__link" href="#/recent" data-nav="recent">
         <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Recent</span>
       </a>
@@ -159,6 +162,25 @@
         <div class="shows__grid" data-watchlist-grid></div>
       </section>
 
+      <section class="shows" data-view="ratings" hidden aria-labelledby="rt-title" data-ratings>
+        <header class="shows__header">
+          <h2 id="rt-title" class="shows__title">My ratings</h2>
+        </header>
+        <div class="ratings-stats glass" data-ratings-stats hidden></div>
+        <div class="sort-bar" data-ratings-bar hidden>
+          <label class="sort-bar__field">
+            <span>Sort</span>
+            <select data-ratings-sort></select>
+          </label>
+          <label class="sort-bar__field">
+            <span>Show</span>
+            <select data-ratings-filter></select>
+          </label>
+          <span class="sort-bar__count" data-ratings-count></span>
+        </div>
+        <div class="shows__grid" data-ratings-grid></div>
+      </section>
+
       <section class="shows" data-view="recent" hidden aria-labelledby="rc-title">
         <header class="shows__header">
           <h2 id="rc-title" class="shows__title">Recently viewed</h2>
@@ -201,6 +223,7 @@
         <ul class="footer-links">
           <li><a href="#/"><i class="fa-solid fa-house" aria-hidden="true"></i> Browse shows</a></li>
           <li><a href="#/watchlist"><i class="fa-solid fa-heart" aria-hidden="true"></i> My list</a></li>
+          <li><a href="#/ratings"><i class="fa-solid fa-star" aria-hidden="true"></i> My ratings</a></li>
           <li><a href="#/recent"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Recently viewed</a></li>
           <li><a href="#/schedule"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i> On tonight</a></li>
         </ul>

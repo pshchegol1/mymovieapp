@@ -275,6 +275,85 @@ test.describe('next-episode countdown', () => {
   });
 });
 
+test.describe('my ratings', () => {
+  const view = (page) => page.locator('[data-view="ratings"]');
+  const grid = (page) => page.locator('[data-ratings-grid] [data-show-card]');
+
+  async function rate(page, id, score) {
+    await page.goto(`/#/show/${id}`);
+    await page.locator(`[data-rate="${score}"]`).click();
+    await expect(page.locator('.rate__value')).toContainText(`${score}/10`);
+  }
+
+  test('is empty until something is rated', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-nav="ratings"]').click();
+    await expect(page).toHaveURL(/#\/ratings$/);
+    await expect(page.locator('[data-nav="ratings"]')).toHaveClass(/is-active/);
+    await expect(view(page)).toContainText('No ratings yet');
+    await expect(page.locator('[data-ratings-stats]')).toBeHidden();
+  });
+
+  test('lists, summarises, sorts and filters rated shows', async ({ page }) => {
+    await rate(page, 1, 9);
+    await rate(page, 3, 4);
+    await rate(page, 2, 9);
+    await page.goto('/#/ratings');
+
+    // Highest score first; ties go to the most recently rated.
+    await expect(grid(page)).toHaveText([/Bravo Drama/, /Alpha Drama/, /Charlie Comedy/]);
+    const stats = page.locator('[data-ratings-stats]');
+    await expect(stats).toContainText('Rated3');
+    await expect(stats).toContainText('Your average7.3');
+    // TVMaze has all three at 8.0: (+1 − 4 + 1) / 3.
+    await expect(stats).toContainText('vs TVMaze−0.7');
+
+    // Histogram bars filter to that score; clicking again clears the filter.
+    const bar9 = stats.getByRole('button', { name: 'Score 9: 2 shows. Show only these' });
+    await bar9.click();
+    await expect(bar9).toHaveAttribute('aria-pressed', 'true');
+    await expect(grid(page)).toHaveCount(2);
+    await expect(page.locator('[data-ratings-count]')).toHaveText('2 shows');
+    await bar9.click();
+    await expect(grid(page)).toHaveCount(3);
+    await expect(stats.getByRole('button', { name: /^Score 5:/ })).toBeDisabled();
+
+    await page.locator('[data-ratings-filter]').selectOption('low');
+    await expect(grid(page)).toHaveText([/Charlie Comedy/]);
+    await page.locator('[data-ratings-filter]').selectOption('all');
+    await page.locator('[data-ratings-sort]').selectOption('diff');
+    await expect(grid(page).first()).toHaveText(/Charlie Comedy/);
+    await page.locator('[data-ratings-sort]').selectOption('az');
+    await expect(grid(page)).toHaveText([/Alpha Drama/, /Bravo Drama/, /Charlie Comedy/]);
+
+    // The footer profile still reads the same scores.
+    await expect(page.locator('[data-footer-profile]')).toContainText('7.3 avg');
+  });
+
+  test('clearing a rating removes the show from the page', async ({ page }) => {
+    await rate(page, 1, 7);
+    await rate(page, 2, 6);
+    await page.goto('/#/ratings');
+    await grid(page).filter({ hasText: 'Alpha Drama' }).click();
+    await page.locator('.rate__clear').click();
+    await page.keyboard.press('Escape');
+    await expect(grid(page)).toHaveText([/Bravo Drama/]);
+  });
+
+  test('ratings saved before this page existed are filled in from TVMaze', async ({ page }) => {
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('mm.ratings')) localStorage.setItem('mm.ratings', JSON.stringify({ 1: 8, 3: 10 }));
+    });
+    await page.goto('/#/ratings');
+    await expect(grid(page)).toHaveText([/Charlie Comedy/, /Alpha Drama/]);
+    await expect(page.locator('[data-ratings-count]')).toHaveText('2 shows');
+
+    // The copies are saved, so a reload doesn't need TVMaze.
+    const stored = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('mm.rated'))));
+    expect(stored.sort()).toEqual(['1', '3']);
+  });
+});
+
 test('broken images fall back to the placeholder', async ({ page }) => {
   await page.goto('/');
   const img = cards(page).filter({ hasText: 'Delta Drama' }).locator('img');

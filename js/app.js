@@ -13,6 +13,7 @@ import * as schedule from './ui/schedule.js';
 import * as theme from './ui/theme.js';
 import * as toast from './ui/toast.js';
 import * as person from './ui/person.js';
+import * as ratings from './ui/ratings.js';
 import { renderCard, onCardEvent } from './ui/show-card.js';
 import * as router from './router.js';
 import { getWatchlist, getRecent, subscribe, clearRecent } from './storage.js';
@@ -125,6 +126,7 @@ sidebar.init({
 footer.init({ root: $('[data-footer]'), shows: () => initialShows });
 
 person.init({ header: $('[data-person-header]'), grid: $('[data-person-grid]') });
+ratings.init({ root: $('[data-ratings]') });
 
 const recentClearBtn = $('[data-recent-clear]');
 if (recentClearBtn) recentClearBtn.addEventListener('click', () => clearRecent());
@@ -231,6 +233,7 @@ router.on('search', ({ query }) => {
 });
 router.on('watchlist', () => { setView('watchlist'); renderWatchlist(); });
 router.on('recent', () => { setView('recent'); renderRecent(); });
+router.on('ratings', () => { setView('ratings'); ratings.render(); });
 router.on('schedule', () => { setView('schedule'); });
 router.on('person/:id', ({ params }) => { setView('person'); person.load(params.id); });
 router.on('show/:id', ({ params }) => {

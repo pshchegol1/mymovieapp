@@ -2,6 +2,7 @@ import { escapeHtml } from '../util/dom.js';
 import { fetchSchedule, fetchNextEpisode, localDate } from '../api.js';
 import { getWatchlist, subscribe } from '../storage.js';
 import { episodeLabel } from '../util/episode.js';
+import { mapLimit } from '../util/async.js';
 import * as modal from './modal.js';
 
 const FUN_FACTS = [
@@ -134,17 +135,6 @@ async function initPremieres(listEl) {
       `${p.show.name}, season ${p.season} premieres ${date}. Open details`);
   }).join('');
   tick(listEl, premieres);
-}
-
-// Run `fn` over `items` with at most `limit` calls in flight.
-async function mapLimit(items, limit, fn) {
-  const out = new Array(items.length);
-  let next = 0;
-  const worker = async () => {
-    while (next < items.length) { const i = next++; out[i] = await fn(items[i]); }
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return out;
 }
 
 // Next episode of each show in My list, soonest first. Re-runs whenever storage
