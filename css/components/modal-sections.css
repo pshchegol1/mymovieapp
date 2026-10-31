@@ -43,6 +43,20 @@
   color: var(--color-text-muted);
 }
 .trailer-cta .btn { margin-left: auto; flex-shrink: 0; }
+.trailer-embed {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: hsl(var(--n-900));
+}
+.trailer-loading, .trailer-credit {
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+}
+.trailer-credit { margin-top: var(--space-2); }
+.trailer-credit a { color: inherit; }
 @media (max-width: 480px) {
   .trailer-cta { flex-wrap: wrap; }
   .trailer-cta .btn { margin-left: 0; width: 100%; }

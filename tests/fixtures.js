@@ -18,8 +18,8 @@ function show(id, name, genres, extra = {}) {
 }
 
 export const SHOWS = [
-  show(1, 'Alpha Drama', ['Drama']),
-  show(2, 'Bravo Drama', ['Drama', 'Crime']),
+  show(1, 'Alpha Drama', ['Drama'], { externals: { imdb: 'tt0000001', thetvdb: null } }),
+  show(2, 'Bravo Drama', ['Drama', 'Crime'], { externals: { imdb: null, thetvdb: 222 } }),
   show(3, 'Charlie Comedy', ['Comedy']),
   show(4, 'Delta Drama', ['Drama'], { image: { medium: BROKEN_IMG, original: BROKEN_IMG } }),
 ];
@@ -70,5 +70,37 @@ export const test = base.extend({
     await use(page);
   },
 });
+
+// Swap in a TMDB key and serve TMDB from fixtures. Records each request URL.
+//   show 1 → matched by IMDb id → has trailers
+//   show 2 → matched by TVDB id → only a featurette (no trailer)
+//   others → no match
+export async function useTmdb(page) {
+  const requests = [];
+  await page.route('**/js/config.js', (route) =>
+    route.fulfill({ contentType: 'text/javascript', body: "export const TMDB_API_KEY = 'test-key';" }));
+  await page.route('https://api.themoviedb.org/**', (route) => {
+    const url = new URL(route.request().url());
+    requests.push(url);
+    const p = url.pathname.replace('/3', '');
+    if (p === '/find/tt0000001') return route.fulfill({ json: { tv_results: [{ id: 901 }] } });
+    if (p === '/find/222') return route.fulfill({ json: { tv_results: [{ id: 902 }] } });
+    if (p.startsWith('/find/')) return route.fulfill({ json: { tv_results: [] } });
+    if (p === '/search/tv') return route.fulfill({ json: { results: [] } });
+    if (p === '/tv/901/videos') {
+      return route.fulfill({ json: { results: [
+        { site: 'YouTube', type: 'Teaser', official: true, key: 'teaser1' },
+        { site: 'YouTube', type: 'Trailer', official: false, key: 'fan1' },
+        { site: 'Vimeo', type: 'Trailer', official: true, key: 'vimeo1' },
+        { site: 'YouTube', type: 'Trailer', official: true, key: 'official1' },
+      ] } });
+    }
+    if (p === '/tv/902/videos') {
+      return route.fulfill({ json: { results: [{ site: 'YouTube', type: 'Featurette', official: true, key: 'feat1' }] } });
+    }
+    return route.fulfill({ status: 404, json: {} });
+  });
+  return requests;
+}
 
 export { expect };

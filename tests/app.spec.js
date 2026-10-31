@@ -1,4 +1,4 @@
-import { test, expect, SHOWS } from './fixtures.js';
+import { test, expect, SHOWS, useTmdb } from './fixtures.js';
 
 const cards = (page) => page.locator('[data-shows-grid] [data-show-card]');
 const modal = (page) => page.locator('[data-modal]');
@@ -142,6 +142,66 @@ test.describe('person pages', () => {
   test('an unknown person shows an error', async ({ page }) => {
     await page.goto('/#/person/999');
     await expect(page.locator('[data-view="person"]')).toContainText('Couldn’t load this person');
+  });
+});
+
+test.describe('trailers', () => {
+  const trailerBtn = (page) => page.locator('[data-action="trailer"]');
+  const embed = (page) => page.locator('[data-trailer-mount] iframe');
+
+  test('without a TMDB key, offers a YouTube search', async ({ page }) => {
+    await page.goto('/#/show/1');
+    await trailerBtn(page).click();
+    await expect(trailerBtn(page)).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('[data-trailer-mount] a')).toHaveAttribute('href', /youtube\.com\/results\?search_query=Alpha%20Drama/);
+    await expect(embed(page)).toHaveCount(0);
+  });
+
+  test('embeds the best official YouTube trailer, and stops it on close', async ({ page }) => {
+    const requests = await useTmdb(page);
+    await page.goto('/#/show/1');
+    await trailerBtn(page).click();
+    await expect(embed(page)).toHaveAttribute('src', /^https:\/\/www\.youtube-nocookie\.com\/embed\/official1\?/);
+    await expect(page.locator('[data-trailer-mount]')).toContainText('not endorsed or certified by TMDB');
+    expect(requests.every((u) => u.searchParams.get('api_key') === 'test-key')).toBe(true);
+
+    // Toggling the button hides the trailer and removes the player.
+    await trailerBtn(page).click();
+    await expect(trailerBtn(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(embed(page)).toHaveCount(0);
+
+    await trailerBtn(page).click();
+    await expect(embed(page)).toHaveCount(1);
+    await page.keyboard.press('Escape');
+    await expect(modal(page)).toBeHidden();
+    await expect(page.locator('[data-modal] iframe')).toHaveCount(0);
+  });
+
+  test('falls back to a search link when TMDB has no trailer', async ({ page }) => {
+    const requests = await useTmdb(page);
+    await page.goto('/#/show/2');
+    await trailerBtn(page).click();
+    await expect(page.locator('[data-trailer-mount]')).toContainText('No trailer found');
+    await expect(page.locator('[data-trailer-mount] a')).toHaveAttribute('href', /search_query=Bravo%20Drama/);
+    expect(requests.some((u) => u.pathname.endsWith('/find/222') && u.searchParams.get('external_source') === 'tvdb_id')).toBe(true);
+
+    // No external ids at all: tries a name + year search, then falls back.
+    await page.goto('/#/show/3');
+    await trailerBtn(page).click();
+    await expect(page.locator('[data-trailer-mount]')).toContainText('No trailer found');
+    const search = requests.find((u) => u.pathname.endsWith('/search/tv'));
+    expect(search.searchParams.get('query')).toBe('Charlie Comedy');
+    expect(search.searchParams.get('first_air_date_year')).toBe('2020');
+  });
+
+  test('works for watchlist shows, which are saved without external ids', async ({ page }) => {
+    await useTmdb(page);
+    await page.goto('/');
+    await cards(page).filter({ hasText: 'Alpha Drama' }).locator('[data-watch-toggle]').click();
+    await page.goto('/#/watchlist');
+    await page.locator('[data-watchlist-grid] [data-show-card]').click();
+    await trailerBtn(page).click();
+    await expect(embed(page)).toHaveAttribute('src', /embed\/official1\?/);
   });
 });
 

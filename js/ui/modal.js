@@ -1,5 +1,5 @@
 import { $, escapeHtml, stripTags } from '../util/dom.js';
-import { showImage, personImage, fetchCast, fetchSeasons, fetchSeasonEpisodes } from '../api.js';
+import { showImage, personImage, fetchCast, fetchSeasons, fetchSeasonEpisodes, fetchTrailerKey, hasTrailerSource } from '../api.js';
 import { isInWatchlist, toggleWatchlist, getRating, setRating, pushRecent, subscribe } from '../storage.js';
 import * as toast from './toast.js';
 
@@ -65,7 +65,6 @@ function bodyHTML(show) {
   const runtime = show.runtime || show.averageRuntime;
   const inList = isInWatchlist(show.id);
   const myRating = getRating(show.id);
-  const trailerQ = encodeURIComponent(`${show.name || ''} official trailer`);
 
   return `
     <div class="modal__top">
@@ -84,7 +83,8 @@ function bodyHTML(show) {
             <i class="fa-${inList ? 'solid' : 'regular'} fa-heart"></i>
             <span>${inList ? 'In your list' : 'Add to list'}</span>
           </button>
-          <button type="button" class="btn btn--accent btn--sm" data-action="trailer">
+          <button type="button" class="btn btn--accent btn--sm" data-action="trailer"
+                  aria-expanded="false" aria-controls="trailer-panel">
             <i class="fa-solid fa-play"></i> Watch trailer
           </button>
           <button type="button" class="btn btn--ghost btn--sm" data-action="share">
@@ -97,7 +97,7 @@ function bodyHTML(show) {
 
     <p class="modal__summary">${escapeHtml(summary)}</p>
 
-    <div class="modal__trailer" data-trailer-mount hidden></div>
+    <div class="modal__trailer" id="trailer-panel" data-trailer-mount hidden></div>
 
     <section class="modal__section">
       <h3 class="modal__section-title">Your rating</h3>
@@ -273,6 +273,53 @@ function renderSimilar(show) {
   });
 }
 
+function trailerSearchHTML(show, title = 'Watch the trailer') {
+  const q = encodeURIComponent(`${show.name || ''} official trailer`);
+  return `
+    <div class="trailer-cta">
+      <i class="fa-brands fa-youtube" aria-hidden="true"></i>
+      <div>
+        <div class="trailer-cta__title">${escapeHtml(title)}</div>
+        <div class="trailer-cta__sub">Opens a YouTube search for "${escapeHtml(show.name || '')} official trailer".</div>
+      </div>
+      <a class="btn btn--primary btn--sm" href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">
+        <i class="fa-solid fa-up-right-from-square"></i> Open
+      </a>
+    </div>`;
+}
+
+function trailerEmbedHTML(show, videoKey) {
+  return `
+    <iframe class="trailer-embed" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoKey)}?autoplay=1&rel=0"
+            title="${escapeHtml(show.name || '')} trailer" allowfullscreen
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
+    <p class="trailer-credit">Trailer found via <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>.
+      This product uses the TMDB API but is not endorsed or certified by TMDB.</p>`;
+}
+
+async function toggleTrailer(show, btn) {
+  const mount = bodyEl.querySelector('[data-trailer-mount]');
+  if (!mount) return;
+  const opening = mount.hidden;
+  mount.hidden = !opening;
+  btn.setAttribute('aria-expanded', String(opening));
+  if (!opening) { mount.innerHTML = ''; return; }
+  if (!hasTrailerSource()) { mount.innerHTML = trailerSearchHTML(show); return; }
+
+  mount.innerHTML = '<p class="trailer-loading">Finding trailer…</p>';
+  let videoKey = null;
+  try {
+    videoKey = await fetchTrailerKey(show);
+  } catch (err) {
+    console.error(err);
+  }
+  // The panel was closed, or another show opened, while we were looking.
+  if (mount.hidden || currentShow !== show) return;
+  mount.innerHTML = videoKey
+    ? trailerEmbedHTML(show, videoKey)
+    : trailerSearchHTML(show, 'No trailer found');
+}
+
 async function onBodyClick(e) {
   const show = currentShow;
   if (!show) return;
@@ -284,22 +331,7 @@ async function onBodyClick(e) {
       toast.show(added ? `Added "${show.name}" to your list` : `Removed from your list`,
         { icon: added ? 'fa-solid fa-heart' : 'fa-solid fa-heart-crack', tone: added ? 'success' : 'info' });
     } else if (action === 'trailer') {
-      const mount = bodyEl.querySelector('[data-trailer-mount]');
-      if (!mount) return;
-      if (!mount.hidden) { mount.hidden = true; mount.innerHTML = ''; return; }
-      const q = encodeURIComponent(`${show.name || ''} official trailer`);
-      mount.innerHTML = `
-        <div class="trailer-cta">
-          <i class="fa-brands fa-youtube" aria-hidden="true"></i>
-          <div>
-            <div class="trailer-cta__title">Watch the trailer</div>
-            <div class="trailer-cta__sub">Opens a YouTube search for "${escapeHtml(show.name || '')} official trailer".</div>
-          </div>
-          <a class="btn btn--primary btn--sm" href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">
-            <i class="fa-solid fa-up-right-from-square"></i> Open
-          </a>
-        </div>`;
-      mount.hidden = false;
+      toggleTrailer(show, actBtn);
     } else if (action === 'share') {
       const url = `${location.origin}${location.pathname}#/show/${show.id}`;
       const shareData = { title: show.name, text: `Check out ${show.name} on MovieMatrix`, url };
@@ -399,6 +431,8 @@ export function close() {
   // Only touch the URL if nothing else has navigated since the modal opened.
   const onShowUrl = currentShow && location.hash === showHash(currentShow);
   modalRoot.hidden = true;
+  // A hidden iframe keeps playing, so drop any trailer.
+  bodyEl.querySelector('[data-trailer-mount]')?.replaceChildren();
   document.body.style.overflow = '';
   if (trapHandler) document.removeEventListener('keydown', trapHandler);
   trapHandler = null;

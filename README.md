@@ -6,7 +6,8 @@ A TV show browser built with plain HTML, CSS and JavaScript modules — no frame
 
 - **Browse** ~240 popular shows by category (Trending, Popular, Top rated, New), genre, year and sort order
 - **Search** any show on TVMaze; genre and sort filters also apply to search results
-- **Show details** with cast, seasons and episodes, similar shows, your own 1–10 rating, and a share link
+- **Show details** with cast, seasons and episodes, similar shows, your own 1–10 rating, a share link, and an embedded trailer (needs a TMDB key, see below)
+- **Person pages** for cast members, with every show they've been in
 - **My list** (watchlist) and **Recently viewed**, saved in the browser
 - **Tonight** — what's airing in the US today
 - **Upcoming premieres** countdown in the sidebar
@@ -23,6 +24,12 @@ python3 -m http.server 8000
 ```
 
 then open the printed address.
+
+### Trailers (optional)
+
+TVMaze has no video data, so trailers are looked up on [TMDB](https://www.themoviedb.org). Get a free API key at https://www.themoviedb.org/settings/api and paste the v3 "API Key" into [js/config.js](js/config.js). Without a key, "Watch trailer" offers a YouTube search link instead.
+
+There's no backend, so the key is visible to anyone using the site. TMDB keys are read-only, but don't use one you need to keep private.
 
 ## Tests
 
