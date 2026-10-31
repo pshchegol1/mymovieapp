@@ -151,7 +151,7 @@
 [data-theme="dark"] .site-footer { background: hsl(220 22% 10% / 0.72); border-top-color: var(--color-border-glass); }
 [data-theme="dark"] .show-card__rating,
 [data-theme="dark"] .show-card__heart {
-  background: hsl(0 0% 0% / 0.55);
+  background: hsl(0 0% 0% / 0.68);
   border-color: hsl(0 0% 100% / 0.18);
 }
 [data-theme="dark"] .modal__close {

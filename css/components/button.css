@@ -27,8 +27,6 @@
 
 .btn--ghost {
   background: hsl(var(--n-0) / 0.55);
-  -webkit-backdrop-filter: blur(8px) saturate(150%);
-          backdrop-filter: blur(8px) saturate(150%);
   border-color: var(--color-border-hairline);
   color: var(--color-text);
 }

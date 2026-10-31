@@ -29,6 +29,6 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .bg-mesh { animation: none !important; }
+  .bg-mesh::before { animation: none !important; }
   .skeleton { animation: none !important; }
 }

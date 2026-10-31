@@ -1,17 +1,26 @@
+/* The colour wash behind the page. The gradients live on an oversized layer
+   that drifts with `transform`, which the GPU moves without repainting;
+   animating background-position instead repainted the whole screen every frame. */
 .bg-mesh {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  overflow: hidden;
+  background: hsl(var(--n-50));
+}
+
+.bg-mesh::before {
+  content: '';
+  position: absolute;
+  inset: -5%;
   background:
     radial-gradient(60% 50% at 12% 18%, hsl(var(--h-blue)   / 0.42), transparent 60%),
     radial-gradient(55% 45% at 85% 12%, hsl(var(--h-violet) / 0.38), transparent 60%),
     radial-gradient(50% 60% at 78% 88%, hsl(var(--h-amber)  / 0.32), transparent 65%),
     radial-gradient(45% 55% at 18% 82%, hsl(var(--h-cyan)   / 0.30), transparent 60%),
-    radial-gradient(80% 80% at 50% 50%, hsl(var(--h-rose)   / 0.18), transparent 70%),
-    hsl(var(--n-50));
-  background-attachment: fixed;
-  filter: saturate(1.05);
+    radial-gradient(80% 80% at 50% 50%, hsl(var(--h-rose)   / 0.18), transparent 70%);
+  will-change: transform;
   animation: meshDrift 60s ease-in-out infinite;
 }
 
@@ -26,6 +35,6 @@
 }
 
 @keyframes meshDrift {
-  0%, 100% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0 0; }
-  50%      { background-position: 4% -3%, -3% 2%, -2% 4%, 3% -2%, 0% 0%, 0 0; }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(2%, -1.5%, 0); }
 }
