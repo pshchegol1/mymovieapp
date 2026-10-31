@@ -449,6 +449,77 @@ test.describe('TV trivia', () => {
   });
 });
 
+test.describe('genre filter', () => {
+  const GENRES = ['Drama', 'Comedy', 'Action', 'Crime', 'Thriller', 'Science-Fiction', 'Romance', 'Horror',
+    'Mystery', 'Fantasy', 'Family', 'Adventure', 'Supernatural', 'History', 'Music', 'War', 'Western',
+    'Anime', 'Medical', 'Legal'];
+  // 40 shows; genre k is in 40 − 2k of them (Drama 40 … Legal 2), so the order is predictable.
+  const manyGenres = (page) => page.route('https://api.tvmaze.com/shows?page=1', (route) => route.fulfill({
+    json: Array.from({ length: 40 }, (_, i) => ({
+      ...SHOWS[0], id: 200 + i, name: `Show ${i}`,
+      genres: GENRES.filter((_, k) => i < 40 - 2 * k),
+    })),
+  }));
+  const bar = (page) => page.locator('[data-genre-filter]');
+  const visiblePills = (page) => bar(page).locator('.genre-pill:visible');
+  const more = (page) => bar(page).locator('[data-genre-more]');
+  const rows = (page) => bar(page).evaluate((el) =>
+    new Set([...el.children].filter((c) => !c.hidden).map((c) => c.offsetTop)).size);
+
+  test('shows two rows of the most common genres, with the rest behind "+N more"', async ({ page }) => {
+    await manyGenres(page);
+    await page.goto('/');
+    await expect(more(page)).toBeVisible();
+    expect(await rows(page)).toBe(2);
+    await expect(visiblePills(page).first()).toHaveText(/^\s*All/);
+    await expect(visiblePills(page).nth(1)).toHaveText(/^\s*Drama/);
+
+    const total = await bar(page).locator('.genre-pill').count();
+    const shown = await visiblePills(page).count();
+    await expect(more(page)).toHaveText(`+${total - shown} more`);
+    await expect(more(page)).toHaveAttribute('aria-expanded', 'false');
+
+    await more(page).click();
+    await expect(visiblePills(page)).toHaveCount(total);
+    await expect(more(page)).toHaveText('Show fewer');
+    await expect(more(page)).toHaveAttribute('aria-expanded', 'true');
+    await expect(more(page)).toHaveAccessibleName('Show fewer');
+
+    await more(page).click();
+    await expect(visiblePills(page)).toHaveCount(shown);
+  });
+
+  test('a genre picked from the expanded list stays visible when collapsed', async ({ page }) => {
+    await manyGenres(page);
+    await page.goto('/');
+    await more(page).click();
+    const legal = bar(page).locator('.genre-pill', { hasText: 'Legal' });
+    await legal.click();
+    await expect(legal).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-result-count]')).toHaveText('2 shows');
+
+    await more(page).click();
+    await expect(legal).toBeVisible();
+    expect(await rows(page)).toBe(2);
+  });
+
+  test('stays at two rows on a phone, and after being hidden on load', async ({ page }) => {
+    await manyGenres(page);
+    await page.setViewportSize({ width: 400, height: 800 });
+    // Start on another view, so the bar is hidden while it's first built.
+    await page.goto('/#/watchlist');
+    await page.locator('[data-nav="home"]').click();
+    await expect(more(page)).toBeVisible();
+    expect(await rows(page)).toBe(2);
+  });
+
+  test('has no "more" button when every genre fits', async ({ page }) => {
+    await page.goto('/');
+    await expect(visiblePills(page)).toHaveText([/^\s*All/, /^\s*Drama/, /^\s*Comedy/, /^\s*Crime/]);
+    await expect(more(page)).toBeHidden();
+  });
+});
+
 test('broken images fall back to the placeholder', async ({ page }) => {
   await page.goto('/');
   const img = cards(page).filter({ hasText: 'Delta Drama' }).locator('img');

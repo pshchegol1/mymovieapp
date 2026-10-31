@@ -1,37 +1,10 @@
+/* Pills wrap; genre-filter.js limits them to two rows behind a "+N more" button. */
 .genre-filter {
-  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
   padding: var(--space-2) 0 var(--space-3);
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--n-700) / 0.35) transparent;
-}
-.genre-filter { --fade: 3rem; }
-.genre-filter.has-more-end {
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
-          mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
-}
-.genre-filter.is-scrolled-start {
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade));
-          mask-image: linear-gradient(to right, transparent, #000 var(--fade));
-}
-.genre-filter.is-scrolled-start.has-more-end {
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
-          mask-image: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
-}
-.genre-filter::-webkit-scrollbar { height: 6px; }
-.genre-filter::-webkit-scrollbar-track { background: transparent; }
-.genre-filter::-webkit-scrollbar-thumb {
-  background: hsl(var(--n-700) / 0.3);
-  border-radius: var(--radius-pill);
-}
-.genre-filter::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--n-700) / 0.55);
 }
 
 .genre-pill {
@@ -92,6 +65,28 @@
   opacity: 1;
 }
 
+.genre-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-4);
+  border: 1px dashed hsl(var(--n-700) / 0.35);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+.genre-more:hover {
+  background: hsl(var(--n-0) / 0.55);
+  color: var(--color-text);
+}
+
 @media (max-width: 480px) {
+  .genre-more,
   .genre-pill { padding: var(--space-2) var(--space-3); font-size: var(--fs-xs); }
 }

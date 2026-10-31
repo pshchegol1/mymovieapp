@@ -1,10 +1,13 @@
 import { escapeHtml } from '../util/dom.js';
 
 const ALL_KEY = '__all__';
+const COLLAPSED_ROWS = 2;
 
 let containerEl;
 let onChange;
 let activeGenre = null;
+let expanded = false;
+let lastWidth = 0;
 
 function buildGenreCounts(shows) {
   const counts = new Map();
@@ -20,7 +23,7 @@ function buildGenreCounts(shows) {
 function pill(label, key, count, isActive) {
   const countHtml = count != null ? `<span class="genre-pill__count">${count}</span>` : '';
   return `
-    <button type="button" class="genre-pill" role="button"
+    <button type="button" class="genre-pill"
             data-genre="${escapeHtml(key)}"
             aria-pressed="${isActive ? 'true' : 'false'}">
       <span>${escapeHtml(label)}</span>${countHtml}
@@ -29,38 +32,59 @@ function pill(label, key, count, isActive) {
 
 function render(shows) {
   const genres = buildGenreCounts(shows);
-  const total = shows.length;
-  let out = pill('All', ALL_KEY, total, activeGenre === null);
+  let out = pill('All', ALL_KEY, shows.length, activeGenre === null);
   for (const [name, count] of genres) {
     out += pill(name, name, count, activeGenre === name);
   }
+  out += `<button type="button" class="genre-more" data-genre-more aria-expanded="false" hidden></button>`;
   containerEl.innerHTML = out;
-  updateFade();
+  layout();
 }
 
-// Fade whichever edge has more pills hidden behind it.
-function updateFade() {
-  const el = containerEl;
-  el.classList.toggle('is-scrolled-start', el.scrollLeft > 4);
-  el.classList.toggle('has-more-end', el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-}
+// Collapsed, show only the pills that fit in the first rows (most common genres
+// first), plus a "+N more" button. The active genre always stays visible.
+function layout() {
+  const pills = [...containerEl.querySelectorAll('.genre-pill')];
+  const more = containerEl.querySelector('[data-genre-more]');
+  if (!more) return;
+  pills.forEach((p) => { p.hidden = false; });
+  more.hidden = true;
+  // Hidden (e.g. another view is showing): nothing to measure yet.
+  if (!containerEl.offsetWidth) return;
 
-function attachWheelScroll(el) {
-  el.addEventListener('wheel', (e) => {
-    if (e.deltaY === 0) return;
-    if (el.scrollWidth <= el.clientWidth) return;
-    const atStart = el.scrollLeft === 0 && e.deltaY < 0;
-    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 && e.deltaY > 0;
-    if (atStart || atEnd) return;
-    e.preventDefault();
-    el.scrollLeft += e.deltaY;
-  }, { passive: false });
+  const rowTops = [...new Set(pills.map((p) => p.offsetTop))];
+  if (rowTops.length <= COLLAPSED_ROWS) return;
+
+  more.hidden = false;
+  more.setAttribute('aria-expanded', String(expanded));
+  if (expanded) {
+    more.textContent = 'Show fewer';
+    more.removeAttribute('aria-label');
+    return;
+  }
+  // Hide pills from the end until the button fits on the last allowed row.
+  const lastRowTop = rowTops[COLLAPSED_ROWS - 1];
+  let hidden = 0;
+  for (let i = pills.length - 1; i > 0 && more.offsetTop > lastRowTop; i--) {
+    if (pills[i].getAttribute('aria-pressed') === 'true') continue;
+    pills[i].hidden = true;
+    hidden++;
+    more.textContent = `+${hidden} more`; // the label's width affects what fits
+  }
+  more.setAttribute('aria-label', `Show ${hidden} more genre${hidden === 1 ? '' : 's'}`);
 }
 
 export function init({ container, onSelect }) {
   containerEl = container;
   onChange = onSelect;
   containerEl.addEventListener('click', (e) => {
+    const more = e.target.closest('[data-genre-more]');
+    if (more) {
+      expanded = !expanded;
+      layout();
+      more.focus();
+      return;
+    }
     const btn = e.target.closest('.genre-pill');
     if (!btn) return;
     const raw = btn.getAttribute('data-genre');
@@ -68,11 +92,14 @@ export function init({ container, onSelect }) {
     if (next === activeGenre) return;
     setActive(next);
     onChange?.(next);
-    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   });
-  attachWheelScroll(containerEl);
-  containerEl.addEventListener('scroll', updateFade, { passive: true });
-  window.addEventListener('resize', updateFade);
+  // Re-fit when the width changes, including going from hidden to visible.
+  // (Height changes are ignored: they're caused by layout() itself.)
+  new ResizeObserver(() => {
+    if (containerEl.offsetWidth === lastWidth) return;
+    lastWidth = containerEl.offsetWidth;
+    layout();
+  }).observe(containerEl);
 }
 
 export function setShows(shows) {
@@ -87,6 +114,7 @@ export function setActive(genre) {
   containerEl.querySelectorAll('.genre-pill').forEach((p) => {
     p.setAttribute('aria-pressed', p.getAttribute('data-genre') === targetKey ? 'true' : 'false');
   });
+  layout();
 }
 
 export function getActive() {
