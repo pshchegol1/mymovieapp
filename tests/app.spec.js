@@ -102,6 +102,26 @@ test('broken images fall back to the placeholder', async ({ page }) => {
   await expect.poll(() => img.evaluate((el) => el.naturalWidth)).toBeGreaterThan(0);
 });
 
+// With app.js blocked, only the inline <head> script can set the theme,
+// which proves it's applied before first paint rather than after the app loads.
+test.describe('theme is set before the app loads', () => {
+  test.beforeEach(({ page }) => page.route('**/js/app.js', (route) => route.abort()));
+
+  test('follows the system dark preference', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.locator('meta[name="color-scheme"]')).toHaveAttribute('content', 'dark');
+  });
+
+  test('a saved choice overrides the system preference', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('mm.theme', 'light'));
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  });
+});
+
 test('theme choice persists across reloads', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/');
