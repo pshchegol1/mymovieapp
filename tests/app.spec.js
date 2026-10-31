@@ -67,6 +67,34 @@ test('"More like this" keeps working after a click between cards', async ({ page
   await expect(page.locator('[data-modal-title]')).toHaveText('Bravo Drama');
 });
 
+test('season tabs follow the ARIA tabs pattern', async ({ page }) => {
+  await page.goto('/#/show/1');
+  const tabs = page.getByRole('tablist', { name: 'Seasons' }).getByRole('tab');
+  const panel = page.getByRole('tabpanel');
+  await expect(tabs).toHaveCount(3);
+  await expect(tabs.nth(0)).toHaveAttribute('aria-selected', 'true');
+  await expect(panel).toHaveAccessibleName('Season 1');
+  await expect(panel).toContainText('Season 1 opener');
+
+  // Arrows move focus (wrapping) without selecting; Enter selects.
+  await tabs.nth(0).focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(tabs.nth(2)).toBeFocused();
+  await expect(tabs.nth(0)).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('Home');
+  await page.keyboard.press('ArrowRight');
+  await expect(tabs.nth(1)).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+  await expect(tabs.nth(1)).toHaveAttribute('tabindex', '0');
+  await expect(tabs.nth(0)).toHaveAttribute('tabindex', '-1');
+  await expect(panel).toHaveAccessibleName('Season 2');
+  await expect(panel).toContainText('Season 2 opener');
+
+  await tabs.nth(2).click();
+  await expect(panel).toContainText('Season 3 opener');
+});
+
 test('broken images fall back to the placeholder', async ({ page }) => {
   await page.goto('/');
   const img = cards(page).filter({ hasText: 'Delta Drama' }).locator('img');

@@ -154,20 +154,30 @@ async function loadSeasons(showId) {
       mount.innerHTML = '<p class="episodes__empty">No seasons listed.</p>';
       return;
     }
+    // Only the selected tab is in the Tab order; arrow keys move between tabs.
     const tabs = seasons.map((s, i) => `
-      <button type="button" class="episodes__tab${i === 0 ? ' is-active' : ''}" data-season-id="${s.id}" data-season-num="${s.number}">
+      <button type="button" class="episodes__tab" role="tab" id="season-tab-${s.id}"
+              aria-selected="${i === 0}" aria-controls="episodes-panel" tabindex="${i === 0 ? 0 : -1}"
+              data-season-id="${s.id}" data-season-num="${s.number}">
         Season ${s.number}
       </button>
     `).join('');
     mount.innerHTML = `
-      <div class="episodes__tabs" role="tablist">${tabs}</div>
-      <div class="episodes__list" data-episodes-list><div class="episodes__loading">Loading…</div></div>
+      <div class="episodes__tabs" role="tablist" aria-label="Seasons">${tabs}</div>
+      <div class="episodes__list" id="episodes-panel" role="tabpanel" tabindex="0"
+           aria-labelledby="season-tab-${seasons[0].id}" data-episodes-list>
+        <div class="episodes__loading">Loading…</div>
+      </div>
     `;
+    const tablist = mount.querySelector('[role="tablist"]');
+    const tabEls = Array.from(tablist.querySelectorAll('[role="tab"]'));
     const listEl = mount.querySelector('[data-episodes-list]');
     const showSeason = async (seasonId) => {
       listEl.innerHTML = '<div class="episodes__loading">Loading…</div>';
       try {
         const eps = await fetchSeasonEpisodes(seasonId);
+        // Another season was picked while this one was loading.
+        if (listEl.getAttribute('aria-labelledby') !== `season-tab-${seasonId}`) return;
         if (!eps || eps.length === 0) {
           listEl.innerHTML = '<p class="episodes__empty">No episodes.</p>';
           return;
@@ -186,15 +196,34 @@ async function loadSeasons(showId) {
           </article>
         `).join('');
       } catch (err) {
+        if (listEl.getAttribute('aria-labelledby') !== `season-tab-${seasonId}`) return;
         console.error(err);
         listEl.innerHTML = '<p class="episodes__empty">Couldn’t load episodes.</p>';
       }
     };
-    mount.querySelector('.episodes__tabs').addEventListener('click', (e) => {
-      const btn = e.target.closest('.episodes__tab');
-      if (!btn) return;
-      mount.querySelectorAll('.episodes__tab').forEach((b) => b.classList.toggle('is-active', b === btn));
+    const select = (btn) => {
+      if (btn.getAttribute('aria-selected') === 'true') return;
+      for (const t of tabEls) {
+        t.setAttribute('aria-selected', String(t === btn));
+        t.tabIndex = t === btn ? 0 : -1;
+      }
+      listEl.setAttribute('aria-labelledby', btn.id);
       showSeason(btn.dataset.seasonId);
+    };
+    tablist.addEventListener('click', (e) => {
+      const btn = e.target.closest('[role="tab"]');
+      if (btn) select(btn);
+    });
+    // Arrows only move focus; Enter/Space (the button's click) selects, so arrowing
+    // across a long-running show doesn't fire an episodes request per season.
+    tablist.addEventListener('keydown', (e) => {
+      const i = tabEls.indexOf(document.activeElement);
+      if (i < 0) return;
+      const last = tabEls.length - 1;
+      const next = { ArrowRight: i === last ? 0 : i + 1, ArrowLeft: i === 0 ? last : i - 1, Home: 0, End: last }[e.key];
+      if (next === undefined) return;
+      e.preventDefault();
+      tabEls[next].focus();
     });
     showSeason(seasons[0].id);
   } catch (err) {

@@ -41,6 +41,11 @@ export const test = base.extend({
       else if (p === '/search/shows') {
         const q = (url.searchParams.get('q') || '').toLowerCase();
         body = SHOWS.filter((s) => s.name.toLowerCase().includes(q)).map((s) => ({ score: 1, show: s }));
+      } else if (/^\/shows\/\d+\/seasons$/.test(p)) {
+        body = [{ id: 11, number: 1 }, { id: 12, number: 2 }, { id: 13, number: 3 }];
+      } else if (/^\/seasons\/\d+\/episodes$/.test(p)) {
+        const n = Number(p.split('/')[2]) - 10;
+        body = [{ id: n * 100, number: 1, name: `Season ${n} opener` }];
       } else if (/^\/shows\/\d+$/.test(p)) {
         body = SHOWS.find((s) => s.id === Number(p.split('/')[2]));
         if (!body) return route.fulfill({ status: 404, json: {} });

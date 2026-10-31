@@ -163,7 +163,7 @@
   cursor: pointer;
 }
 .episodes__tab:hover { background: hsl(var(--n-0) / 0.85); color: var(--color-text); }
-.episodes__tab.is-active {
+.episodes__tab[aria-selected="true"] {
   background: var(--grad-cta);
   color: white;
   border-color: transparent;
