@@ -68,10 +68,6 @@ export function init({ root, shows }) {
   rootEl.querySelector('[data-footer-tagline]').textContent = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
   rootEl.querySelector('[data-footer-year]').textContent = new Date().getFullYear();
   rootEl.querySelector('[data-surprise]').addEventListener('click', surprise);
-  rootEl.querySelector('[data-back-to-top]').addEventListener('click', () => {
-    const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
-  });
 
   renderProfile();
   subscribe(renderProfile);

@@ -685,6 +685,31 @@ test.describe('genre filter', () => {
   });
 });
 
+test.describe('back to top button', () => {
+  const button = (page) => page.locator('[data-to-top]');
+  const ringOffset = (page) => page.locator('[data-to-top-ring]').evaluate((el) => Number(el.style.strokeDashoffset));
+
+  test('appears after scrolling down, tracks progress, and returns to the top', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 500 });
+    await page.goto('/');
+    await expect(cards(page)).toHaveCount(SHOWS.length);
+    await expect(button(page)).toBeHidden();
+
+    await page.mouse.wheel(0, 900);
+    await expect(button(page)).toBeVisible();
+    await expect(page.locator('body')).toHaveClass(/has-to-top/);
+    const partway = await ringOffset(page);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect.poll(() => ringOffset(page)).toBeLessThan(partway);
+    await expect.poll(() => ringOffset(page)).toBeCloseTo(0, 1);
+
+    await button(page).click();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(button(page)).toBeHidden();
+    await expect(page.locator('body')).not.toHaveClass(/has-to-top/);
+  });
+});
+
 test('broken images fall back to the placeholder', async ({ page }) => {
   await page.goto('/');
   const img = cards(page).filter({ hasText: 'Delta Drama' }).locator('img');

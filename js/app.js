@@ -6,6 +6,7 @@ import * as search from './ui/search.js';
 import * as modal from './ui/modal.js';
 import * as sidebar from './ui/sidebar.js';
 import * as footer from './ui/footer.js';
+import * as toTop from './ui/to-top.js';
 import * as genreFilter from './ui/genre-filter.js';
 import * as catTabs from './ui/category-tabs.js';
 import * as sort from './ui/sort.js';
@@ -127,6 +128,7 @@ onThisDay.init({ root: $('[data-on-this-day]') });
 trivia.init({ root: $('[data-trivia]') });
 
 footer.init({ root: $('[data-footer]'), shows: () => initialShows });
+toTop.init({ button: $('[data-to-top]') });
 
 person.init({ header: $('[data-person-header]'), grid: $('[data-person-grid]') });
 ratings.init({ root: $('[data-ratings]') });

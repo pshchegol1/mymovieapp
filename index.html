@@ -254,11 +254,17 @@
         <a href="https://www.tvmaze.com" target="_blank" rel="noopener">TVMaze</a>
         (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA</a>)
       </p>
-      <button type="button" class="footer-top" data-back-to-top>
-        Back to top <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
-      </button>
     </div>
   </footer>
+
+  <button type="button" class="to-top" data-to-top aria-label="Back to top">
+    <svg class="to-top__ring" viewBox="0 0 52 52" aria-hidden="true">
+      <circle class="to-top__track" cx="26" cy="26" r="22"></circle>
+      <circle class="to-top__progress" cx="26" cy="26" r="22" data-to-top-ring></circle>
+    </svg>
+    <i class="fa-solid fa-arrow-up to-top__icon" aria-hidden="true"></i>
+    <span class="to-top__label" aria-hidden="true">Top</span>
+  </button>
 
   <div class="modal" data-modal hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal__scrim" data-modal-scrim></div>
