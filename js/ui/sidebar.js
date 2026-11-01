@@ -1,11 +1,12 @@
 import { escapeHtml } from '../util/dom.js';
-import { fetchSchedule, fetchNextEpisode, localDate } from '../api.js';
-import { getWatchlist, subscribe } from '../storage.js';
+import { fetchSchedule, fetchNextEpisode, localDate, showImage } from '../api.js';
+import { getWatchlist, isInWatchlist, toggleWatchlist, subscribe } from '../storage.js';
 import { episodeLabel } from '../util/episode.js';
 import { mapLimit } from '../util/async.js';
 import * as modal from './modal.js';
+import * as toast from './toast.js';
 
-const PREMIERE_COUNT = 3;
+const PREMIERE_COUNT = 4;
 const LOOKAHEAD_DAYS = 14;
 const DAYS_PER_BATCH = 3;
 const BAR_WINDOW_MS = 7 * 86400000; // the bar fills over the final week
@@ -40,14 +41,41 @@ async function loadPremieres() {
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
-function timeLeft(airs) {
+const UNITS = [['d', 'days', 86400000], ['h', 'hrs', 3600000], ['m', 'min', 60000], ['s', 'sec', 1000]];
+
+// [days, hours, minutes, seconds] until `airs`, or null once it has started.
+function parts(airs) {
   let diff = airs - Date.now();
   if (diff <= 0) return null;
-  const days = Math.floor(diff / 86400000); diff -= days * 86400000;
-  const hours = Math.floor(diff / 3600000); diff -= hours * 3600000;
-  const mins = Math.floor(diff / 60000);    diff -= mins * 60000;
-  const secs = Math.floor(diff / 1000);
-  return `${pad(days)}d ${pad(hours)}h ${pad(mins)}m ${pad(secs)}s`;
+  return UNITS.map(([, , ms]) => {
+    const n = Math.floor(diff / ms);
+    diff -= n * ms;
+    return n;
+  });
+}
+
+function timeLeft(airs) {
+  const left = parts(airs);
+  return left && left.map((n, i) => `${pad(n)}${UNITS[i][0]}`).join(' ');
+}
+
+// The two largest units: "in 1d 18h", "in 3h 12m", "in 45s".
+function shortLeft(airs) {
+  const left = parts(airs);
+  if (!left) return null;
+  let i = left.findIndex((n) => n > 0);
+  if (i < 0) i = UNITS.length - 1;
+  return `in ${left.slice(i, i + 2).map((n, k) => `${n}${UNITS[i + k][0]}`).join(' ')}`;
+}
+
+// "Tonight", "Today" or "Tomorrow" when the premiere is that close, else null.
+function dayWord(airs) {
+  const d = new Date(airs);
+  const now = new Date();
+  const days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+  if (days === 0) return d.getHours() >= 17 ? 'Tonight' : 'Today';
+  return days === 1 ? 'Tomorrow' : null;
 }
 
 function barPercent(airs) {
@@ -56,6 +84,7 @@ function barPercent(airs) {
 }
 
 const shortDate = (ms) => new Date(ms).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+const timeOf = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
 function note(listEl, text) {
   listEl.innerHTML = `<li class="countdown-item countdown-item--note">${escapeHtml(text)}</li>`;
@@ -97,6 +126,90 @@ function openOnClick(listEl, items) {
   });
 }
 
+const kindOf = (p) => (p.season === 1
+  ? { cls: 'new', icon: 'fa-champagne-glasses', text: 'Series premiere' }
+  : { cls: 'back', icon: 'fa-clapperboard', text: `Season ${p.season} returns` });
+
+// "Remind me" adds the show to My list, so its episodes then show up under
+// Your next episodes. The featured premiere's button is labelled; the rest are icons.
+function syncFollow(btn, p) {
+  const on = isInWatchlist(p.show.id);
+  btn.classList.toggle('is-on', on);
+  btn.setAttribute('aria-pressed', String(on));
+  btn.setAttribute('aria-label', on ? `Following ${p.show.name}: it's in My list` : `Remind me: add ${p.show.name} to My list`);
+  btn.innerHTML = `<i class="fa-${on ? 'solid' : 'regular'} fa-bell" aria-hidden="true"></i>`
+    + (btn.dataset.premiereFollow === '0' ? `<span>${on ? 'Following' : 'Remind me'}</span>` : '');
+}
+
+function premiereHTML(p, i) {
+  const kind = kindOf(p);
+  const network = p.show.network?.name || p.show.webChannel?.name || '';
+  const label = `${p.show.name}, ${kind.text.toLowerCase()}, ${shortDate(p.airs)} at ${timeOf(p.airs)}${network ? ` on ${network}` : ''}. Open details`;
+  const follow = `<button type="button" class="premiere__follow" data-premiere-follow="${i}"></button>`;
+  const live = '<span class="premiere__live"><i class="fa-solid fa-circle" aria-hidden="true"></i> Airing now</span>';
+  if (i === 0) {
+    const day = dayWord(p.airs);
+    const clock = UNITS.map(([u, name]) => `
+      <span class="premiere__tile"><span class="premiere__num" data-unit="${u}">00</span><span class="premiere__unit">${name}</span></span>`).join('');
+    return `
+      <li class="premiere premiere--featured" data-premiere="0">
+        <button type="button" class="premiere__main" data-countdown-idx="0" aria-label="${escapeHtml(label)}">
+          <span class="premiere__art">
+            <img class="premiere__poster" src="${escapeHtml(showImage(p.show))}" alt="">
+            ${day ? `<span class="premiere__day">${day}</span>` : ''}
+          </span>
+          <span class="premiere__info">
+            <span class="premiere__kind premiere__kind--${kind.cls}"><i class="fa-solid ${kind.icon}" aria-hidden="true"></i> ${escapeHtml(kind.text)}</span>
+            <span class="premiere__title">${escapeHtml(p.show.name)}</span>
+            <span class="premiere__when">${escapeHtml([shortDate(p.airs), timeOf(p.airs), network].filter(Boolean).join(' · '))}</span>
+          </span>
+        </button>
+        <div class="premiere__clock" role="timer" data-premiere-clock>${clock}</div>
+        ${live}
+        ${follow}
+      </li>`;
+  }
+  const sub = [p.season === 1 ? 'Series premiere' : `S${p.season}`, shortDate(p.airs), network].filter(Boolean).join(' · ');
+  return `
+    <li class="premiere" data-premiere="${i}">
+      <button type="button" class="premiere__main" data-countdown-idx="${i}" aria-label="${escapeHtml(label)}">
+        <img class="premiere__poster" src="${escapeHtml(showImage(p.show))}" alt="" loading="lazy">
+        <span class="premiere__info">
+          <span class="premiere__title">${escapeHtml(p.show.name)}</span>
+          <span class="premiere__when">${escapeHtml(sub)}</span>
+          <span class="premiere__chip" data-premiere-chip></span>
+          ${live}
+        </span>
+      </button>
+      ${follow}
+    </li>`;
+}
+
+// Update the clock digits and chips in place; a digit that changed rolls in.
+function tickPremieres(listEl) {
+  listEl.querySelectorAll('[data-premiere]').forEach((item) => {
+    const p = premieres[Number(item.dataset.premiere)];
+    if (!p) return;
+    const left = parts(p.airs);
+    item.classList.toggle('is-live', !left);
+    const clock = item.querySelector('[data-premiere-clock]');
+    if (clock && left) {
+      clock.querySelectorAll('[data-unit]').forEach((el, k) => {
+        const text = pad(left[k]);
+        if (el.textContent === text) return;
+        el.textContent = text;
+        el.classList.remove('is-tick');
+        void el.offsetWidth;    // restart the animation
+        el.classList.add('is-tick');
+      });
+      const spoken = `Starts in ${left[0]} days, ${left[1]} hours and ${left[2]} minutes`;
+      if (clock.getAttribute('aria-label') !== spoken) clock.setAttribute('aria-label', spoken);
+    }
+    const chip = item.querySelector('[data-premiere-chip]');
+    if (chip) chip.textContent = shortLeft(p.airs) || '';
+  });
+}
+
 async function initPremieres(listEl) {
   note(listEl, 'Loading premieres…');
   try {
@@ -110,12 +223,23 @@ async function initPremieres(listEl) {
     note(listEl, 'No premieres in the next two weeks.');
     return;
   }
-  listEl.innerHTML = premieres.map((p, i) => {
-    const date = shortDate(p.airs);
-    return countdownItemHTML(i, p.show.name, `S${p.season} · ${date}`,
-      `${p.show.name}, season ${p.season} premieres ${date}. Open details`);
-  }).join('');
-  tick(listEl, premieres);
+  listEl.innerHTML = premieres.map(premiereHTML).join('');
+  // The featured card's background is its own poster, blurred.
+  listEl.querySelector('.premiere--featured')
+    ?.style.setProperty('--poster', `url(${JSON.stringify(showImage(premieres[0].show))})`);
+  listEl.querySelectorAll('[data-premiere-follow]').forEach((btn) => syncFollow(btn, premieres[Number(btn.dataset.premiereFollow)]));
+  tickPremieres(listEl);
+}
+
+function onFollowClick(e) {
+  const btn = e.target.closest('[data-premiere-follow]');
+  const p = btn && premieres[Number(btn.dataset.premiereFollow)];
+  if (!p) return;
+  const added = toggleWatchlist(p.show);
+  toast.show(added
+    ? `We'll keep “${p.show.name}” under Your next episodes`
+    : `Removed “${p.show.name}” from your list`,
+  { icon: added ? 'fa-solid fa-bell' : 'fa-solid fa-bell-slash', tone: added ? 'success' : 'info' });
 }
 
 // Next episode of each show in My list, soonest first. Re-runs whenever storage
@@ -164,6 +288,9 @@ async function loadNextEpisodes(listEl) {
 export function init({ nextList, countdownList }) {
   initPremieres(countdownList);
   openOnClick(countdownList, () => premieres);
+  countdownList.addEventListener('click', onFollowClick);
+  subscribe(() => countdownList.querySelectorAll('[data-premiere-follow]')
+    .forEach((btn) => syncFollow(btn, premieres[Number(btn.dataset.premiereFollow)])));
 
   if (nextList) {
     loadNextEpisodes(nextList);
@@ -173,7 +300,7 @@ export function init({ nextList, countdownList }) {
 
   setInterval(() => {
     if (document.hidden) return;
-    tick(countdownList, premieres);
+    tickPremieres(countdownList);
     if (nextList) tick(nextList, nextEps);
   }, 1000);
 }

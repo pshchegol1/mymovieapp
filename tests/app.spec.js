@@ -106,6 +106,74 @@ test('season tabs follow the ARIA tabs pattern', async ({ page }) => {
   await expect(panel).toContainText('Season 3 opener');
 });
 
+test.describe('upcoming premieres', () => {
+  const widget = (page) => page.locator('[data-countdown-items]');
+  const featured = (page) => widget(page).locator('.premiere--featured');
+  const inHours = (h) => new Date(Date.now() + h * 3600000).toISOString();
+  // Every day's schedule lists these; the widget should keep the four
+  // premieres (not the news show, nor a non-premiere episode), soonest first.
+  const premiereSchedule = (page, first = 3) => page.route('https://api.tvmaze.com/schedule?**', (route) => route.fulfill({ json: [
+    { season: 3, number: 1, airstamp: inHours(80), show: SHOWS[3] },
+    { season: 2, number: 1, airstamp: inHours(30), show: SHOWS[1] },
+    { season: 1, number: 1, airstamp: inHours(first), show: SHOWS[0] },
+    { season: 4, number: 1, airstamp: inHours(50), show: SHOWS[2] },
+    { season: 9, number: 1, airstamp: inHours(1), show: { ...SHOWS[2], id: 80, type: 'News' } },
+    { season: 2, number: 6, airstamp: inHours(2), show: { ...SHOWS[2], id: 81 } },
+  ] }));
+
+  test('features the soonest with a ticking clock, and lists the rest', async ({ page }) => {
+    await premiereSchedule(page);
+    await page.goto('/');
+    await expect(featured(page).locator('[data-countdown-idx]')).toHaveText(/Series premiere\s*Alpha Drama\s*\w{3}, \w{3} \d+ · .+ · CBS/);
+    await expect(featured(page).locator('.premiere__day')).toHaveText(/^(Today|Tonight|Tomorrow)$/);
+    await expect(featured(page).locator('.premiere__unit')).toHaveText(['days', 'hrs', 'min', 'sec']);
+    const digits = featured(page).locator('[data-unit]');
+    await expect(digits).toHaveText(['00', /^0[23]$/, /^\d\d$/, /^\d\d$/]);
+    await expect(featured(page).getByRole('timer')).toHaveAccessibleName(/^Starts in 0 days, [23] hours and \d+ minutes$/);
+    const sec = await digits.last().textContent();
+    await expect(digits.last()).not.toHaveText(sec);
+
+    await expect(widget(page).locator('.premiere:not(.premiere--featured) [data-countdown-idx]')).toHaveText([
+      /Bravo Drama\s*S2 · .+ · CBS\s*in 1d [56]h/,
+      /Charlie Comedy\s*S4 · .+ · BBC One\s*in 2d [12]h/,
+      /Delta Drama\s*S3 · .+ · Netflix\s*in 3d [78]h/,
+    ]);
+
+    await widget(page).getByRole('button', { name: /^Charlie Comedy, season 4 returns/ }).click();
+    await expect(page.locator('[data-modal-title]')).toHaveText('Charlie Comedy');
+  });
+
+  test('"Remind me" adds the show to My list and its next episodes', async ({ page }) => {
+    await premiereSchedule(page);
+    await page.goto('/');
+    const remind = featured(page).getByRole('button', { name: 'Remind me: add Alpha Drama to My list' });
+    await remind.click();
+    const following = featured(page).getByRole('button', { name: /^Following Alpha Drama/ });
+    await expect(following).toHaveAttribute('aria-pressed', 'true');
+    await expect(following).toHaveText('Following');
+    await expect(page.locator('[data-watchlist-count]')).toHaveText('1');
+    await expect(page.locator('[data-next-episodes] [data-countdown-idx]')).toHaveText([/Alpha Drama/]);
+
+    // The compact rows' bells work the same way.
+    await widget(page).getByRole('button', { name: 'Remind me: add Bravo Drama to My list' }).click();
+    await expect(page.locator('[data-watchlist-count]')).toHaveText('2');
+    await following.click();
+    await expect(remind).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('[data-watchlist-count]')).toHaveText('1');
+  });
+
+  test('says "Airing now" once a premiere starts', async ({ page }) => {
+    await page.clock.install();
+    await premiereSchedule(page, 0.5);
+    await page.goto('/');
+    await expect(featured(page).getByRole('timer')).toBeVisible();
+    await expect(featured(page).locator('.premiere__live')).toBeHidden();
+    await page.clock.fastForward('31:00');
+    await expect(featured(page).locator('.premiere__live')).toBeVisible();
+    await expect(featured(page).getByRole('timer')).toBeHidden();
+  });
+});
+
 test.describe('episode ratings heatmap', () => {
   const heat = (page) => page.locator('[data-heat]');
   const cell = (page, label) => heat(page).getByRole('button', { name: label });
@@ -302,8 +370,8 @@ test.describe('next-episode countdown', () => {
   test('upcoming premieres still count down and open details', async ({ page }) => {
     await page.goto('/');
     const premieres = page.locator('[data-countdown-items]');
-    await expect(premieres.locator('[data-countdown-idx]')).toHaveText([/Charlie Comedy\s*S4 · /]);
-    await expect(premieres.locator('[data-countdown-time]')).toHaveText(/^02d 0[12]h \d\dm \d\ds$/);
+    await expect(premieres.locator('[data-countdown-idx]')).toHaveText([/Season 4 returns\s*Charlie Comedy/]);
+    await expect(premieres.locator('[data-unit]')).toHaveText(['02', /^0[12]$/, /^\d\d$/, /^\d\d$/]);
     await premieres.locator('[data-countdown-idx]').click();
     await expect(page.locator('[data-modal-title]')).toHaveText('Charlie Comedy');
   });
