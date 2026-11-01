@@ -354,6 +354,64 @@ test.describe('my ratings', () => {
   });
 });
 
+test.describe('carousel', () => {
+  const carousel = (page) => page.locator('[data-carousel]');
+  const activeSlide = (page) => carousel(page).locator('.carousel__slide.is-active');
+  // Speed autoplay up (a stylesheet !important beats the inline default).
+  const fastAutoplay = (page) => page.addStyleTag({ content: '.carousel { --autoplay: 400ms !important; }' });
+
+  test('ranks the slides and loads a wide backdrop where TVMaze has one', async ({ page }) => {
+    await page.goto('/');
+    await expect(activeSlide(page)).toHaveAttribute('aria-label', 'Alpha Drama');
+    await expect(activeSlide(page).locator('.carousel__kicker')).toHaveText('#1 in Trending');
+    await expect(activeSlide(page).locator('.carousel__genres li')).toHaveText(['Drama']);
+    await expect(activeSlide(page).locator('.carousel__art')).toHaveAttribute('src', 'https://static.tvmaze.com/bg3.jpg');
+    // Show 2 has no images, so it keeps the blurred poster.
+    await expect(carousel(page).locator('[data-slide-idx="1"] .carousel__art')).toHaveCount(0);
+  });
+
+  test('the My list button toggles the watchlist', async ({ page }) => {
+    await page.goto('/');
+    const watch = activeSlide(page).locator('[data-slide-watch]');
+    await watch.click();
+    await expect(watch).toHaveAttribute('aria-pressed', 'true');
+    await expect(watch).toHaveText('In your list');
+    await expect(page.locator('[data-watchlist-count]')).toHaveText('1');
+    await expect(modal(page)).toBeHidden();
+  });
+
+  test('autoplays, and pauses while hovered', async ({ page }) => {
+    await page.goto('/');
+    await page.mouse.move(0, 0);
+    await fastAutoplay(page);
+    await expect(activeSlide(page)).toHaveAttribute('aria-label', 'Bravo Drama');
+    await expect(carousel(page).locator('[aria-selected="true"]')).toHaveAttribute('aria-label', 'Go to slide 2');
+
+    await carousel(page).hover();
+    const label = await activeSlide(page).getAttribute('aria-label');
+    await page.waitForTimeout(1000);
+    await expect(activeSlide(page)).toHaveAttribute('aria-label', label);
+  });
+
+  test('does not autoplay when reduced motion is preferred', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await fastAutoplay(page);
+    await expect(activeSlide(page)).toHaveAttribute('aria-label', 'Alpha Drama');
+    await expect(carousel(page)).not.toHaveClass(/is-playing/);
+    await page.waitForTimeout(1000);
+    await expect(activeSlide(page)).toHaveAttribute('aria-label', 'Alpha Drama');
+  });
+
+  test('"Surprise me" opens a show', async ({ page }) => {
+    await page.goto('/');
+    await activeSlide(page).waitFor();
+    await carousel(page).getByRole('button', { name: /Surprise me/ }).click();
+    await expect(modal(page)).toBeVisible();
+    await expect(page.locator('[data-modal-title]')).toHaveText(new RegExp(SHOWS.map((s) => s.name).join('|')));
+  });
+});
+
 test.describe('schedule', () => {
   const view = (page) => page.locator('[data-schedule]');
   const schedCards = (page) => view(page).locator('[data-sched-idx]');

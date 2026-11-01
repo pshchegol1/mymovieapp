@@ -56,6 +56,10 @@ export async function fetchCast(id) {
   return getJSON(`${BASE}/shows/${id}/cast`);
 }
 
+export async function fetchShowImages(id) {
+  return getJSON(`${BASE}/shows/${id}/images`);
+}
+
 export async function fetchSeasons(id) {
   return getJSON(`${BASE}/shows/${id}/seasons`);
 }

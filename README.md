@@ -4,6 +4,7 @@ A TV show browser built with plain HTML, CSS and JavaScript modules — no frame
 
 ## Features
 
+- **Trending banner** with each show's widescreen backdrop, its rank, a My list button, and **Surprise me** to open a random well-rated show
 - **Browse** ~240 popular shows by category (Trending, Popular, Top rated, New), genre, year and sort order
 - **Search** any show on TVMaze; genre and sort filters also apply to search results
 - **Show details** with cast, seasons and episodes, similar shows, your own 1–10 rating, a share link, and an embedded trailer (needs a TMDB key, see below)

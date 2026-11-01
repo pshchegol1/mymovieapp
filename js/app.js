@@ -45,6 +45,7 @@ carousel.init({
   indicators: $('[data-carousel-indicators]'),
   prev: $('[data-carousel-prev]'),
   next: $('[data-carousel-next]'),
+  surprise: $('[data-carousel-surprise]'),
 });
 
 const searchInput = $('[data-search-input]');
@@ -263,7 +264,7 @@ schedule.init({ root: $('[data-schedule]') });
       genreFilter.setShows(initialShows);
       refreshGrid();
     }
-    carousel.setShows(catTabs.applyCategory(initialShows, 'trending').slice(0, 8));
+    carousel.setShows(catTabs.applyCategory(initialShows, 'trending').slice(0, 8), initialShows);
     trivia.setShows(initialShows);
   } catch (err) {
     console.error('Failed to load shows', err);
