@@ -1,8 +1,9 @@
 import { $, escapeHtml, stripTags } from '../util/dom.js';
-import { showImage, personImage, fetchCast, fetchSeasons, fetchSeasonEpisodes, fetchNextEpisode, fetchTrailerKey, hasTrailerSource } from '../api.js';
+import { showImage, personImage, fetchCast, fetchSeasons, fetchSeasonEpisodes, fetchShowEpisodes, fetchNextEpisode, fetchTrailerKey, hasTrailerSource } from '../api.js';
 import { episodeText, relativeTime } from '../util/episode.js';
 import { isInWatchlist, toggleWatchlist, getRating, setRating, pushRecent, subscribe } from '../storage.js';
 import * as toast from './toast.js';
+import * as heatmap from './episode-heatmap.js';
 
 let modalRoot, dialog, titleEl, bodyEl, closeBtn, scrim;
 let lastFocus = null;
@@ -12,6 +13,9 @@ let trapHandler = null;
 let currentShow = null;
 let similarPool = [];
 let unsub = null;
+let revealTarget = null;   // { season, number } to scroll to once its season's list loads
+
+const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 
 function focusables() {
   return Array.from(dialog.querySelectorAll(
@@ -111,6 +115,11 @@ function bodyHTML(show) {
       <div class="cast" data-cast><div class="cast__loading">Loading cast…</div></div>
     </section>
 
+    <section class="modal__section" data-heat-section hidden>
+      <h3 class="modal__section-title">Episode ratings</h3>
+      <div class="heat" data-heat></div>
+    </section>
+
     <section class="modal__section" data-episodes-section>
       <h3 class="modal__section-title">Seasons &amp; episodes</h3>
       <div class="episodes" data-episodes><div class="episodes__loading">Loading episodes…</div></div>
@@ -167,6 +176,44 @@ async function loadNextEpisode(show) {
   row.hidden = false;
 }
 
+// Episode ratings by season, for shows with enough rated episodes.
+async function loadHeatmap(show) {
+  const section = bodyEl.querySelector('[data-heat-section]');
+  if (!section) return;
+  let seasons = null;
+  try {
+    seasons = heatmap.seasonsOf(await fetchShowEpisodes(show.id));
+  } catch (err) {
+    console.error(err);
+  }
+  if (!seasons || currentShow !== show) return;
+  heatmap.mount(section.querySelector('[data-heat]'), seasons, { onPick: revealEpisode });
+  section.hidden = false;
+}
+
+// Open an episode's season in the list below and scroll to it.
+function revealEpisode(ep) {
+  const tab = bodyEl.querySelector(`[role="tab"][data-season-num="${ep.season}"]`);
+  if (!tab) return;
+  revealTarget = { season: ep.season, number: ep.number };
+  if (tab.getAttribute('aria-selected') === 'true') highlightReveal(ep.season);
+  else tab.click();
+}
+
+// Called whenever a season's list has rendered; a no-op unless an episode in
+// that season is waiting to be revealed.
+function highlightReveal(seasonNum) {
+  if (!revealTarget || revealTarget.season !== Number(seasonNum)) return;
+  const el = bodyEl.querySelector(`[data-episode-num="${revealTarget.number}"]`);
+  if (!el) return;          // still loading; tried again once it renders
+  revealTarget = null;
+  el.scrollIntoView({ block: 'center', behavior: reducedMotion?.matches ? 'auto' : 'smooth' });
+  el.focus({ preventScroll: true });
+  el.classList.remove('is-flash');
+  void el.offsetWidth;      // restart the animation
+  el.classList.add('is-flash');
+}
+
 async function loadSeasons(showId) {
   const mount = bodyEl.querySelector('[data-episodes]');
   if (!mount) return;
@@ -194,7 +241,7 @@ async function loadSeasons(showId) {
     const tablist = mount.querySelector('[role="tablist"]');
     const tabEls = Array.from(tablist.querySelectorAll('[role="tab"]'));
     const listEl = mount.querySelector('[data-episodes-list]');
-    const showSeason = async (seasonId) => {
+    const showSeason = async (seasonId, seasonNum) => {
       listEl.innerHTML = '<div class="episodes__loading">Loading…</div>';
       try {
         const eps = await fetchSeasonEpisodes(seasonId);
@@ -205,18 +252,20 @@ async function loadSeasons(showId) {
           return;
         }
         listEl.innerHTML = eps.map((e) => `
-          <article class="episode">
+          <article class="episode" data-episode-num="${escapeHtml(e.number ?? '')}" tabindex="-1">
             <div class="episode__num">${escapeHtml(e.number ?? '')}</div>
             <div class="episode__body">
               <div class="episode__title">${escapeHtml(e.name || '')}</div>
               <div class="episode__meta">
                 ${e.airdate ? `<span><i class="fa-regular fa-calendar"></i> ${escapeHtml(e.airdate)}</span>` : ''}
                 ${e.runtime ? `<span><i class="fa-regular fa-clock"></i> ${escapeHtml(e.runtime)} min</span>` : ''}
+                ${e.rating?.average != null ? `<span><i class="fa-solid fa-star"></i> ${escapeHtml(Number(e.rating.average).toFixed(1))}</span>` : ''}
               </div>
               ${e.summary ? `<p class="episode__summary">${escapeHtml(stripTags(e.summary))}</p>` : ''}
             </div>
           </article>
         `).join('');
+        highlightReveal(seasonNum);
       } catch (err) {
         if (listEl.getAttribute('aria-labelledby') !== `season-tab-${seasonId}`) return;
         console.error(err);
@@ -230,7 +279,7 @@ async function loadSeasons(showId) {
         t.tabIndex = t === btn ? 0 : -1;
       }
       listEl.setAttribute('aria-labelledby', btn.id);
-      showSeason(btn.dataset.seasonId);
+      showSeason(btn.dataset.seasonId, btn.dataset.seasonNum);
     };
     tablist.addEventListener('click', (e) => {
       const btn = e.target.closest('[role="tab"]');
@@ -247,7 +296,7 @@ async function loadSeasons(showId) {
       e.preventDefault();
       tabEls[next].focus();
     });
-    showSeason(seasons[0].id);
+    showSeason(seasons[0].id, seasons[0].number);
   } catch (err) {
     console.error(err);
     mount.innerHTML = '<p class="episodes__empty">Couldn’t load seasons.</p>';
@@ -408,6 +457,7 @@ export function open(show, triggerEl) {
     pushedEntry = false;
   }
   currentShow = show;
+  revealTarget = null;
   pushRecent(show);
   // Make the open show linkable without triggering the router. The first show
   // gets its own history entry so Back closes the modal; switching to a similar
@@ -423,6 +473,7 @@ export function open(show, triggerEl) {
   if (show.id) {
     loadCast(show.id);
     loadSeasons(show.id);
+    loadHeatmap(show);
     loadNextEpisode(show);
   }
   renderSimilar(show);

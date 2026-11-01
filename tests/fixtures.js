@@ -52,6 +52,17 @@ export const WEB_SCHEDULE = {
   ],
 };
 
+// Every show's episodes: three seasons of ten. S2 E4 is the peak, S3 E7 the
+// low, S1 E2 has no rating yet, and season 2 has the best average.
+const RATING_BASE = { 1: 7.5, 2: 8.6, 3: 7.2 };
+const SPECIAL_EPISODES = { '2-4': ['The Peak', 9.6], '3-7': ['The Dip', 5.5], '1-2': ['Unrated', null] };
+function episode(season, number) {
+  const [name, rating] = SPECIAL_EPISODES[`${season}-${number}`]
+    || [number === 1 ? `Season ${season} opener` : `Chapter ${number}`, RATING_BASE[season] + (number % 3) / 10];
+  return { id: season * 100 + number, season, number, name, type: 'regular', runtime: 50, airdate: `2020-0${season}-${String(number).padStart(2, '0')}`, rating: { average: rating } };
+}
+export const EPISODES = [1, 2, 3].flatMap((s) => Array.from({ length: 10 }, (_, i) => episode(s, i + 1)));
+
 export const PERSON = {
   id: 50, name: 'Jamie Example', birthday: '1970-05-15', deathday: null,
   country: { name: 'Canada' }, url: 'https://www.tvmaze.com/people/50/jamie-example',
@@ -92,7 +103,7 @@ export const test = base.extend({
           ? PAST_SCHEDULE
           : [{ season: 4, number: 1, airstamp: inHours(50), show: SHOWS[2] }];
       } else if (/^\/shows\/\d+\/episodes$/.test(p)) {
-        body = Array.from({ length: 30 }, (_, i) => ({ id: 5000 + i, season: 1, number: i + 1, runtime: 50 }));
+        body = EPISODES;
       } else if (p === '/shows/1/images') {
         // The carousel should pass over the poster, the too-square background,
         // the small one and the 8K one for the 1920px one.
@@ -115,7 +126,7 @@ export const test = base.extend({
         body = [{ id: 11, number: 1 }, { id: 12, number: 2 }, { id: 13, number: 3 }];
       } else if (/^\/seasons\/\d+\/episodes$/.test(p)) {
         const n = Number(p.split('/')[2]) - 10;
-        body = [{ id: n * 100, number: 1, name: `Season ${n} opener` }];
+        body = EPISODES.filter((ep) => ep.season === n);
       } else if (/^\/shows\/\d+$/.test(p)) {
         body = SHOWS.find((s) => s.id === Number(p.split('/')[2]));
         if (!body) return route.fulfill({ status: 404, json: {} });

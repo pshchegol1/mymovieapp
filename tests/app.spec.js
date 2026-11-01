@@ -1,4 +1,4 @@
-import { test, expect, SHOWS, useTmdb } from './fixtures.js';
+import { test, expect, SHOWS, EPISODES, useTmdb } from './fixtures.js';
 
 const cards = (page) => page.locator('[data-shows-grid] [data-show-card]');
 const modal = (page) => page.locator('[data-modal]');
@@ -104,6 +104,76 @@ test('season tabs follow the ARIA tabs pattern', async ({ page }) => {
 
   await tabs.nth(2).click();
   await expect(panel).toContainText('Season 3 opener');
+});
+
+test.describe('episode ratings heatmap', () => {
+  const heat = (page) => page.locator('[data-heat]');
+  const cell = (page, label) => heat(page).getByRole('button', { name: label });
+
+  test('maps every episode by season, with the peak, low and best season called out', async ({ page }) => {
+    await page.goto('/#/show/1');
+    await expect(heat(page).locator('.heat__chip')).toHaveText([
+      /Peak: S2 · E4 · The Peak · 9\.6/,
+      /Low: S3 · E7 · The Dip · 5\.5/,
+      /Best season: 2 · avg 8\.\d/,
+    ]);
+    await expect(heat(page).locator('.heat__cell')).toHaveCount(30);
+    await expect(heat(page).getByRole('rowheader')).toHaveText(['S1', 'S2', 'S3']);
+    await expect(cell(page, 'S2 · E4 The Peak, rated 9.6, highest rated')).toHaveClass(/heat__cell--4 is-peak/);
+    await expect(cell(page, 'S3 · E7 The Dip, rated 5.5, lowest rated')).toHaveClass(/heat__cell--0 is-low/);
+    await expect(cell(page, 'S1 · E2 Unrated, no rating')).toHaveText('–');
+    await expect(heat(page).locator('.heat__avg.is-best')).toHaveCount(1);
+    await expect(heat(page).getByRole('row').nth(2).locator('.heat__avg')).toHaveClass(/is-best/);
+
+    await cell(page, /^S2 · E4/).hover();
+    await expect(heat(page).getByRole('tooltip')).toHaveText(/S2 · E4 · The Peak\s*9\.6 · \w+ \d+, 2020/);
+  });
+
+  test('picking an episode opens its season below and scrolls to it', async ({ page }) => {
+    await page.goto('/#/show/1');
+    await heat(page).getByRole('button', { name: /^Peak:/ }).click();
+    const seasonTabs = page.getByRole('tablist', { name: 'Seasons' }).getByRole('tab');
+    await expect(seasonTabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+    const ep = page.locator('[data-episode-num="4"]');
+    await expect(ep).toBeFocused();
+    await expect(ep).toContainText('The Peak');
+    await expect(ep).toContainText('9.6');
+    await expect(ep).toBeInViewport();
+
+    // Within the season already open, too.
+    await cell(page, /^S2 · E9/).click();
+    await expect(page.locator('[data-episode-num="9"]')).toBeFocused();
+  });
+
+  test('is left out for shows without enough ratings', async ({ page }) => {
+    await page.route('https://api.tvmaze.com/shows/3/episodes', (route) =>
+      route.fulfill({ json: EPISODES.map((ep) => ({ ...ep, rating: { average: null } })) }));
+    await page.goto('/#/show/3');
+    await expect(page.getByRole('tabpanel')).toContainText('Season 1 opener');
+    await expect(page.locator('[data-heat-section]')).toBeHidden();
+  });
+
+  test('long-running shows start with their first ten seasons', async ({ page }) => {
+    const longRun = Array.from({ length: 15 }, (_, s) =>
+      [1, 2].map((number) => ({ ...EPISODES[0], id: s * 10 + number, season: s + 1, number }))).flat();
+    await page.route('https://api.tvmaze.com/shows/3/episodes', (route) => route.fulfill({ json: longRun }));
+    await page.goto('/#/show/3');
+    const seasons = heat(page).getByRole('rowheader');
+    await expect(seasons).toHaveCount(10);
+    await heat(page).getByRole('button', { name: 'Show all 15 seasons' }).click();
+    await expect(seasons).toHaveCount(15);
+    await heat(page).getByRole('button', { name: 'Show fewer seasons' }).click();
+    await expect(seasons).toHaveCount(10);
+  });
+
+  test('fades the edge while more episodes are off to the side', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto('/#/show/1');
+    const scroller = heat(page).locator('.heat__scroll');
+    await expect(scroller).toHaveClass(/has-more/);
+    await scroller.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+    await expect(scroller).not.toHaveClass(/has-more/);
+  });
 });
 
 test.describe('person pages', () => {

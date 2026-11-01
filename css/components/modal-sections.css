@@ -281,3 +281,151 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Episode ratings heatmap. One blue ramp, light to dark for low to high
+   ratings (reversed in dark mode, so high ratings are the most prominent there
+   too); each step has the text color that reads on it. */
+.heat {
+  --heat-0: #6da7ec; --heat-ink-0: #0f1726;
+  --heat-1: #3987e5; --heat-ink-1: #0f1726;
+  --heat-2: #256abf; --heat-ink-2: #fff;
+  --heat-3: #184f95; --heat-ink-3: #fff;
+  --heat-4: #0d366b; --heat-ink-4: #fff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+[data-theme="dark"] .heat {
+  --heat-0: #256abf; --heat-ink-0: #fff;
+  --heat-1: #3987e5; --heat-ink-1: #0f1726;
+  --heat-2: #6da7ec; --heat-ink-2: #0f1726;
+  --heat-3: #9ec5f4; --heat-ink-3: #0f1726;
+  --heat-4: #cde2fb; --heat-ink-4: #0f1726;
+}
+.heat__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.heat__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border-hairline);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  text-align: left;
+}
+.heat__chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.heat__chip strong { color: var(--color-text); }
+button.heat__chip { cursor: pointer; transition: border-color var(--dur-fast) var(--ease-standard); }
+button.heat__chip:hover { border-color: hsl(var(--h-blue) / 0.6); }
+.heat__chip--peak i { color: hsl(var(--h-blue)); }
+.heat__chip--low i { color: var(--color-text-soft); }
+.heat__chip--season i { color: hsl(var(--h-amber)); }
+
+.heat__scroll {
+  overflow-x: auto;
+  /* room for the peak/low outlines at the edges */
+  padding: 3px;
+  margin: -3px;
+}
+.heat__grid {
+  display: grid;
+  grid-template-columns: 2.25rem repeat(var(--cols), minmax(2.1rem, 2.6rem)) 2.75rem;
+  gap: 2px;
+  width: max-content;
+  min-width: 0;
+}
+.heat__row { display: contents; }
+.heat__col, .heat__season, .heat__avg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-soft);
+  font-variant-numeric: tabular-nums;
+}
+.heat__season { justify-content: flex-start; color: var(--color-text-muted); }
+.heat__avg { color: var(--color-text-muted); }
+.heat__avg.is-best { color: var(--color-text); font-weight: var(--fw-bold); }
+.heat__avg.is-best::after { content: '\2605'; margin-left: 2px; color: hsl(var(--h-amber)); }
+.heat__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 2rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+.heat__cell:hover, .heat__cell:focus-visible { transform: scale(1.12); position: relative; z-index: 1; }
+.heat__cell--0 { background: var(--heat-0); color: var(--heat-ink-0); }
+.heat__cell--1 { background: var(--heat-1); color: var(--heat-ink-1); }
+.heat__cell--2 { background: var(--heat-2); color: var(--heat-ink-2); }
+.heat__cell--3 { background: var(--heat-3); color: var(--heat-ink-3); }
+.heat__cell--4 { background: var(--heat-4); color: var(--heat-ink-4); }
+.heat__cell--none {
+  background: transparent;
+  border: 1px dashed var(--color-border-hairline);
+  color: var(--color-text-soft);
+}
+.heat__cell.is-peak { outline: 2px solid var(--color-text); outline-offset: 1px; }
+.heat__cell.is-low { outline: 2px dashed var(--color-text); outline-offset: 1px; }
+
+.heat__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-xs);
+  color: var(--color-text-soft);
+}
+.heat__legend li { display: inline-flex; align-items: center; gap: 6px; }
+.heat__swatch {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 3px;
+}
+.heat__swatch--peak, .heat__swatch--low { border: 2px solid var(--color-text); }
+.heat__swatch--low { border-style: dashed; }
+
+.heat__tip {
+  position: absolute;
+  z-index: 2;
+  max-width: min(18rem, 100%);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: hsl(220 30% 14%);
+  border: 1px solid hsl(0 0% 100% / 0.12);
+  box-shadow: var(--shadow-2);
+  color: white;
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
+.heat__tip[hidden] { display: none; }
+.heat__tip-title { font-weight: var(--fw-semibold); }
+.heat__tip-meta { color: hsl(0 0% 100% / 0.75); }
+.heat__tip-meta .fa-star { color: hsl(var(--h-amber)); }
+
+/* An episode picked on the heatmap flashes once in the list. */
+.episode.is-flash { animation: episodeFlash 1.6s var(--ease-standard); }
+@keyframes episodeFlash {
+  from { box-shadow: 0 0 0 3px hsl(var(--h-blue) / 0.7); background: hsl(var(--h-blue) / 0.18); }
+}
+.heat__row[hidden] { display: none; }
+.heat__scroll.has-more { mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent); }
+.heat__more { align-self: flex-start; }
