@@ -62,12 +62,13 @@
   z-index: -2;
 }
 .carousel__art.is-loaded { opacity: 1; }
-/* Steady speed: an easing that crawls at the end moves a fraction of a pixel
-   per frame, which reads as jitter. */
-.carousel__slide.is-active .carousel__art { animation: carouselZoom 16s linear forwards; }
-@keyframes carouselZoom {
-  from { transform: scale3d(1, 1, 1); }
-  to   { transform: scale3d(1.08, 1.08, 1); }
+/* A short settle as the slide arrives, then the backdrop holds still. A slow,
+   continuous zoom moves the image a fraction of a pixel per frame, and the
+   resampling makes fine detail shimmer however it's tuned. */
+.carousel__slide.is-active .carousel__art { animation: carouselSettle 1400ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes carouselSettle {
+  from { transform: scale3d(1.08, 1.08, 1); }
+  to   { transform: scale3d(1, 1, 1); }
 }
 /* Dark on the left for the text, clear on the right to show the backdrop. */
 .carousel__shade {

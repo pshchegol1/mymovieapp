@@ -6,7 +6,7 @@ import * as toast from './toast.js';
 
 const SURPRISE_MIN_RATING = 7.5;
 const BACKDROP_WIDTH = 1920;
-// Where each slide's slow zoom heads, so consecutive slides don't all move alike.
+// The point each slide's backdrop settles toward, so consecutive slides don't all move alike.
 const ZOOM_ORIGINS = ['70% 30%', '30% 60%', '60% 70%', '40% 25%'];
 
 let trackEl, indicatorsEl, prevBtn, nextBtn, rootEl, surpriseBtn;
