@@ -9,7 +9,7 @@ A TV show browser built with plain HTML, CSS and JavaScript modules — no frame
 - **Show details** with cast, seasons and episodes, similar shows, your own 1–10 rating, a share link, and an embedded trailer (needs a TMDB key, see below)
 - **Person pages** for cast members, with every show they've been in
 - **My list** (watchlist), **My ratings** (sort, filter and a breakdown of your scores) and **Recently viewed**, saved in the browser
-- **Tonight** — what's airing in the US today
+- **Tonight** — what's airing on US TV today, plus a **Streaming** tab with today's new episodes on Netflix, Prime Video, Apple TV, Peacock and the rest (season drops grouped into one entry)
 - **Your next episodes** (for shows in My list) and **Upcoming premieres** countdowns in the sidebar, plus **On this day in TV** and **TV trivia** worked out from TVMaze data
 - Light/dark theme, keyboard accessible, respects "reduce motion"
 
@@ -54,6 +54,7 @@ Navigation is hash-based, so every view can be bookmarked or shared and the Back
 | `#/ratings` | My ratings |
 | `#/recent` | Recently viewed |
 | `#/schedule` | Tonight |
+| `#/schedule/streaming` | New on streaming today |
 | `#/person/50` | A cast member's details and shows (works for any TVMaze person id) |
 
 ## Project structure

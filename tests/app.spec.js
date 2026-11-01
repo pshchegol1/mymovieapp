@@ -354,6 +354,43 @@ test.describe('my ratings', () => {
   });
 });
 
+test.describe('schedule', () => {
+  const view = (page) => page.locator('[data-schedule]');
+  const schedCards = (page) => view(page).locator('[data-sched-idx]');
+  const tab = (page, name) => view(page).getByRole('link', { name });
+
+  test('streaming lists each show once, most popular first, without news', async ({ page }) => {
+    await page.goto('/#/schedule/streaming');
+    await expect(view(page).locator('[data-schedule-title]')).toHaveText('New on streaming');
+    await expect(tab(page, 'Streaming')).toHaveAttribute('aria-current', 'page');
+    await expect(schedCards(page)).toHaveText([
+      /Delta Drama\s*Netflix\s*S2 · 3 episodes/,
+      /Alpha Drama\s*Peacock\s*S1 · E4 · Streamed First/,
+    ]);
+    await expect(view(page).locator('[data-schedule-status]')).toHaveText(/^2 shows · /);
+
+    await schedCards(page).first().click();
+    await expect(page.locator('[data-modal-title]')).toHaveText('Delta Drama');
+    await page.keyboard.press('Escape');
+    await expect(page).toHaveURL(/#\/schedule\/streaming$/);
+    await expect(schedCards(page)).toHaveCount(2);
+  });
+
+  test('tabs switch between TV and streaming', async ({ page }) => {
+    await page.goto('/#/schedule');
+    await expect(view(page).locator('[data-schedule-title]')).toHaveText('On tonight');
+    await expect(schedCards(page)).toHaveText([/Charlie Comedy\s*BBC One\s*S4 · E1/]);
+
+    await tab(page, 'Streaming').click();
+    await expect(page).toHaveURL(/#\/schedule\/streaming$/);
+    await expect(schedCards(page)).toHaveCount(2);
+
+    await page.goBack();
+    await expect(tab(page, 'On TV')).toHaveAttribute('aria-current', 'page');
+    await expect(schedCards(page)).toHaveText([/Charlie Comedy/]);
+  });
+});
+
 test.describe('on this day in TV', () => {
   const widget = (page) => page.locator('[data-on-this-day]');
   const dateLine = (page) => widget(page).locator('.otd__date');

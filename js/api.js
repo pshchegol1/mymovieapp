@@ -124,6 +124,13 @@ export async function fetchSchedule(country = 'US', date = null) {
   return getJSON(`${BASE}/schedule?country=${encodeURIComponent(country)}&date=${d}`);
 }
 
+// Episodes released on streaming services, with the show in `_embedded.show`.
+// Country '' gives the global services (Netflix, Apple TV, …), which have no country.
+export async function fetchWebSchedule(country = 'US', date = null) {
+  const d = date || localDate();
+  return getJSON(`${BASE}/schedule/web?country=${encodeURIComponent(country)}&date=${d}`);
+}
+
 export const FALLBACK_IMG = './img/noimg.jpg';
 
 export function showImage(show, kind = 'medium') {

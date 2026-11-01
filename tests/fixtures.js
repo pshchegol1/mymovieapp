@@ -42,6 +42,16 @@ const PAST_SCHEDULE = [
   pastEp(SHOWS[3], 85, 1, 9, 'Fourth Place'),
 ];
 
+// Streaming releases by country ('' = global services). The tab should merge
+// both, list Delta's season drop once, skip the news feed and rank by popularity.
+export const WEB_SCHEDULE = {
+  '': [1, 2, 3].map((number) => ({ season: 2, number, name: `Drop ${number}`, _embedded: { show: { ...SHOWS[3], weight: 95 } } })),
+  US: [
+    { season: 1, number: 4, name: 'Streamed First', _embedded: { show: { ...SHOWS[0], network: null, webChannel: { name: 'Peacock' } } } },
+    { season: 2026, number: 50, name: 'Episode 50', _embedded: { show: show(72, 'News Feed', [], { type: 'News', weight: 99 }) } },
+  ],
+};
+
 export const PERSON = {
   id: 50, name: 'Jamie Example', birthday: '1970-05-15', deathday: null,
   country: { name: 'Canada' }, url: 'https://www.tvmaze.com/people/50/jamie-example',
@@ -73,6 +83,8 @@ export const test = base.extend({
       else if (p === '/search/shows') {
         const q = (url.searchParams.get('q') || '').toLowerCase();
         body = SHOWS.filter((s) => s.name.toLowerCase().includes(q)).map((s) => ({ score: 1, show: s }));
+      } else if (p === '/schedule/web') {
+        body = WEB_SCHEDULE[url.searchParams.get('country') ?? ''] || [];
       } else if (p === '/schedule') {
         const year = Number((url.searchParams.get('date') || '').slice(0, 4));
         // Upcoming: the same premiere listed every day; the widget should show it once.

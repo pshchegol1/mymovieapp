@@ -236,7 +236,8 @@ router.on('search', ({ query }) => {
 router.on('watchlist', () => { setView('watchlist'); renderWatchlist(); });
 router.on('recent', () => { setView('recent'); renderRecent(); });
 router.on('ratings', () => { setView('ratings'); ratings.render(); });
-router.on('schedule', () => { setView('schedule'); });
+router.on('schedule', () => { setView('schedule'); schedule.show('tv'); });
+router.on('schedule/streaming', () => { setView('schedule'); schedule.show('streaming'); });
 router.on('person/:id', ({ params }) => { setView('person'); person.load(params.id); });
 router.on('show/:id', ({ params }) => {
   setView('home');
@@ -251,7 +252,7 @@ subscribe(() => {
 });
 
 updateBadges();
-schedule.init({ list: $('[data-schedule-list]'), status: $('[data-schedule-status]') });
+schedule.init({ root: $('[data-schedule]') });
 
 (async () => {
   try {

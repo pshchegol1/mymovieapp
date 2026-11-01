@@ -125,11 +125,19 @@
         </div>
       </section>
 
-      <section class="schedule" data-view="schedule" hidden aria-labelledby="sched-title">
+      <section class="schedule" data-view="schedule" hidden aria-labelledby="sched-title" data-schedule>
         <header class="shows__header">
-          <h2 id="sched-title" class="shows__title">On tonight</h2>
+          <h2 id="sched-title" class="shows__title" data-schedule-title>On tonight</h2>
           <span class="shows__sub" data-schedule-status></span>
         </header>
+        <nav class="cat-tabs" aria-label="Schedule">
+          <a class="cat-tab" href="#/schedule" data-sched-tab="tv">
+            <i class="fa-solid fa-tv" aria-hidden="true"></i><span>On TV</span>
+          </a>
+          <a class="cat-tab" href="#/schedule/streaming" data-sched-tab="streaming">
+            <i class="fa-solid fa-circle-play" aria-hidden="true"></i><span>Streaming</span>
+          </a>
+        </nav>
         <div class="schedule__list" data-schedule-list></div>
       </section>
 
@@ -232,6 +240,7 @@
           <li><a href="#/ratings"><i class="fa-solid fa-star" aria-hidden="true"></i> My ratings</a></li>
           <li><a href="#/recent"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Recently viewed</a></li>
           <li><a href="#/schedule"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i> On tonight</a></li>
+          <li><a href="#/schedule/streaming"><i class="fa-solid fa-circle-play" aria-hidden="true"></i> New on streaming</a></li>
         </ul>
       </nav>
     </div>
