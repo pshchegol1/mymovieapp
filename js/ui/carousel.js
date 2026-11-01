@@ -5,6 +5,7 @@ import * as modal from './modal.js';
 import * as toast from './toast.js';
 
 const SURPRISE_MIN_RATING = 7.5;
+const BACKDROP_WIDTH = 1920;
 // Where each slide's slow zoom heads, so consecutive slides don't all move alike.
 const ZOOM_ORIGINS = ['70% 30%', '30% 60%', '60% 70%', '40% 25%'];
 
@@ -60,13 +61,18 @@ function renderSlide(show, idx) {
     </div>`;
 }
 
-// The widest landscape background TVMaze has for a show (its "main" one first), or null.
+// A landscape background for the show, or null: the smallest one at least
+// 1920px wide, else the largest there is. Some shows have 4K/8K uploads, which
+// are slow to decode and shimmer when scaled down that far while zooming.
 function pickBackdrop(images) {
   const wide = (images || [])
     .filter((im) => im.type === 'background')
     .map((im) => ({ main: im.main, ...im.resolutions?.original }))
     .filter((r) => r.url && r.width / r.height >= 1.3);
-  wide.sort((a, b) => (b.main - a.main) || (b.width - a.width));
+  const big = (r) => r.width >= BACKDROP_WIDTH;
+  wide.sort((a, b) => (big(b) - big(a))
+    || (big(a) ? a.width - b.width : b.width - a.width)
+    || (b.main - a.main));
   return wide[0]?.url ?? null;
 }
 

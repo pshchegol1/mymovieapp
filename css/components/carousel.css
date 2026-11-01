@@ -53,15 +53,21 @@
   object-fit: cover;
   object-position: center 30%;
   transform-origin: var(--zoom-origin, center);
+  /* Draw the image once and let the GPU scale it, so the zoom doesn't
+     re-render it (and snap it to whole pixels) every frame. */
+  will-change: transform;
+  backface-visibility: hidden;
   opacity: 0;
   transition: opacity 900ms var(--ease-standard);
   z-index: -2;
 }
 .carousel__art.is-loaded { opacity: 1; }
-.carousel__slide.is-active .carousel__art { animation: carouselZoom 14s var(--ease-out-quart) forwards; }
+/* Steady speed: an easing that crawls at the end moves a fraction of a pixel
+   per frame, which reads as jitter. */
+.carousel__slide.is-active .carousel__art { animation: carouselZoom 16s linear forwards; }
 @keyframes carouselZoom {
-  from { transform: scale(1); }
-  to   { transform: scale(1.1); }
+  from { transform: scale3d(1, 1, 1); }
+  to   { transform: scale3d(1.08, 1.08, 1); }
 }
 /* Dark on the left for the text, clear on the right to show the backdrop. */
 .carousel__shade {

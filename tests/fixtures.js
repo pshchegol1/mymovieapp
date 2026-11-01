@@ -94,11 +94,14 @@ export const test = base.extend({
       } else if (/^\/shows\/\d+\/episodes$/.test(p)) {
         body = Array.from({ length: 30 }, (_, i) => ({ id: 5000 + i, season: 1, number: i + 1, runtime: 50 }));
       } else if (p === '/shows/1/images') {
-        // A portrait poster and a too-square background, which the carousel
-        // should pass over for the wide one.
+        // The carousel should pass over the poster, the too-square background,
+        // the small one and the 8K one for the 1920px one.
         const img = (n, type, width, height, main = false) =>
           ({ type, main, resolutions: { original: { url: `https://static.tvmaze.com/bg${n}.jpg`, width, height } } });
-        body = [img(1, 'poster', 680, 1000, true), img(2, 'background', 1000, 1000), img(3, 'background', 1920, 1080)];
+        body = [
+          img(1, 'poster', 680, 1000, true), img(2, 'background', 1000, 1000), img(3, 'background', 1920, 1080),
+          img(4, 'background', 7680, 4320, true), img(5, 'background', 1280, 720),
+        ];
       } else if (/^\/shows\/\d+\/cast$/.test(p)) {
         body = [{ person: PERSON, character: { name: 'Detective Ray' } }];
       } else if (p === `/people/${PERSON.id}`) {
