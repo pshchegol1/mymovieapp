@@ -1,4 +1,4 @@
-import { test, expect, SHOWS, EPISODES, useTmdb } from './fixtures.js';
+import { test, expect, SHOWS, EPISODES, BROKEN_IMG, useTmdb } from './fixtures.js';
 
 const cards = (page) => page.locator('[data-shows-grid] [data-show-card]');
 const modal = (page) => page.locator('[data-modal]');
@@ -349,15 +349,17 @@ test.describe('next-episode countdown', () => {
 
   test('lists My list shows by next air date and updates with the list', async ({ page }) => {
     await page.goto('/');
-    await expect(widget(page)).toContainText('Add shows to My list');
+    await expect(widget(page)).toContainText('Your couch schedule is empty');
 
-    // Show 4's episode already aired and show 3 has none, so only 1 and 2 appear.
+    // Show 4's episode already aired and show 3 has none, so only 1 and 2 appear:
+    // the soonest as the Up next card, the other as a guide row.
     for (const name of ['Alpha Drama', 'Bravo Drama', 'Charlie Comedy', 'Delta Drama']) {
       await heart(page, name).click();
     }
     const rows = widget(page).locator('[data-countdown-idx]');
-    await expect(rows).toHaveText([/Bravo Drama\s*S1 · E9/, /Alpha Drama\s*S2 · E5/]);
-    await expect(widget(page).locator('[data-countdown-time]').first()).toHaveText(/^01d 0[12]h \d\dm \d\ds$/);
+    await expect(rows).toHaveText([/Up next\s*Bravo Drama\s*S1 · E9/, /Alpha Drama\s*S2 · E5 · The Return/]);
+    await expect(widget(page).locator('[data-nx-clock]')).toHaveText(/^1d 0[12]:\d\d:\d\d$/);
+    await expect(page.locator('[data-next-summary]')).toHaveText('This week: 2 episodes · 1h 45m of TV');
 
     await rows.first().click();
     await expect(page.locator('[data-modal-title]')).toHaveText('Bravo Drama');
@@ -365,6 +367,61 @@ test.describe('next-episode countdown', () => {
 
     await heart(page, 'Bravo Drama').click();
     await expect(rows).toHaveText([/Alpha Drama/]);
+  });
+
+  test('an empty list suggests running shows, and Follow adds one', async ({ page }) => {
+    await page.goto('/');
+    const follow = widget(page).locator('[data-nx-follow]');
+    // Delta Drama has ended, so only the three running shows are suggested.
+    await expect(widget(page).locator('.nx-suggest')).toHaveText([/Alpha Drama/, /Bravo Drama/, /Charlie Comedy/]);
+    await follow.first().click();
+    await expect(page.locator('[data-watchlist-count]')).toHaveText('1');
+    await expect(widget(page).locator('[data-countdown-idx]')).toHaveText([/Up next\s*Alpha Drama/]);
+  });
+
+  test('groups by day, flags clashes, premieres and live episodes', async ({ page }) => {
+    const at = new Date(Date.now() + 2 * 86400000);
+    at.setHours(20, 0, 0, 0);
+    const slot = at.toISOString();
+    const serve = (id, ep) => page.route(`https://api.tvmaze.com/shows/${id}?embed=nextepisode`, async (route) => {
+      const res = await route.fetch();
+      route.fulfill({ json: { ...(await res.json()), _embedded: { nextepisode: ep } } });
+    });
+    // Charlie started 10 minutes ago; Alpha and Bravo share a slot in two days.
+    await serve(3, { season: 4, number: 2, name: 'Live One', runtime: 30, airstamp: new Date(Date.now() - 600000).toISOString() });
+    await serve(1, { season: 3, number: 1, name: 'New Season', airstamp: slot });
+    await serve(2, { season: 1, number: 10, name: 'Same Slot', airstamp: slot });
+
+    await page.goto('/');
+    for (const name of ['Alpha Drama', 'Bravo Drama', 'Charlie Comedy']) await heart(page, name).click();
+
+    const feature = widget(page).locator('.nx-feature');
+    await expect(feature).toHaveClass(/is-live/);
+    await expect(feature.locator('[data-nx-kicker]')).toHaveText('Airing now');
+    await expect(feature.locator('[data-nx-clock]')).toHaveText('On now');
+
+    await expect(widget(page).locator('.nx-day')).toHaveCount(1);
+    await expect(widget(page).locator('.nx-clash')).toHaveText(/Alpha Drama and Bravo Drama air at \d{1,2}:00\s[AP]M\. Time to pick one!/);
+    const items = widget(page).locator('.nx-item');
+    await expect(items.nth(0).locator('.nx-badge')).toHaveText('Premiere');
+    await expect(items.nth(0).locator('.nx-badge')).toHaveAttribute('title', 'Season premiere');
+    // The second show in the slot doesn't repeat the time.
+    await expect(items.nth(0).locator('.nx-item__time')).toHaveText(/^\d{1,2}:00\s*[AP]M$/);
+    await expect(items.nth(1).locator('.nx-item__time')).toHaveText('');
+  });
+
+  test('Add to calendar downloads an event for the Up next episode', async ({ page }) => {
+    await page.goto('/');
+    await heart(page, 'Alpha Drama').click();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      widget(page).getByRole('button', { name: 'Add Alpha Drama to your calendar' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('alpha-drama.ics');
+    const ics = await (await download.createReadStream()).toArray().then((c) => Buffer.concat(c).toString());
+    expect(ics).toContain('SUMMARY:Alpha Drama (S2E5)');
+    expect(ics).toMatch(/DTSTART:\d{8}T\d{6}Z/);
+    expect(ics).toContain('DESCRIPTION:S2 · E5 · The Return on CBS');
   });
 
   test('upcoming premieres still count down and open details', async ({ page }) => {
@@ -622,60 +679,125 @@ test.describe('on this day in TV', () => {
 
 test.describe('TV trivia', () => {
   const widget = (page) => page.locator('[data-trivia]');
-  const fact = (page) => widget(page).locator('.trivia__fact');
-  const another = (page) => widget(page).getByRole('button', { name: 'Another fact' });
+  const quiz = (page) => widget(page).locator('.quiz');
+  const action = (page) => widget(page).locator('[data-trivia-more]');
+  const streak = (page) => widget(page).locator('[data-quiz-streak]');
+  const kindOf = (page) => quiz(page).getAttribute('data-quiz');
 
-  // Clicks through facts until `count` distinct ones have been seen.
-  async function collect(page, count) {
-    const seen = [];
-    await expect(another(page)).toBeEnabled();
-    seen.push(await fact(page).textContent());
-    while (seen.length < count) {
-      await another(page).click();
-      await expect(fact(page)).not.toHaveText(seen[seen.length - 1]);
-      await expect(another(page)).toBeEnabled();
-      seen.push(await fact(page).textContent());
-    }
-    return seen;
+  // Delta Drama's poster is broken in the fixtures, and a poster zoom of it
+  // skips itself; serve it here so questions only change when a test says so.
+  test.beforeEach(({ page }) => page.route(BROKEN_IMG, (route) => route.fulfill({ path: 'img/noimg.jpg' })));
+
+  async function nextQuestion(page) {
+    const n = Number(await quiz(page).getAttribute('data-quiz-n'));
+    await action(page).click();
+    await expect(quiz(page)).toHaveAttribute('data-quiz-n', String(n + 1));
+    await expect(action(page)).toBeEnabled();
   }
 
-  test('cycles through facts worked out from the home page shows', async ({ page }) => {
+  // The right answer, worked out from the fixtures. Character questions can't be
+  // (every fixture show has the same cast), so those are skipped first.
+  async function correctAnswer(page) {
+    while ((await kindOf(page)) === 'character') await nextQuestion(page);
+    const kind = await kindOf(page);
+    if (kind === 'year') return '2020';
+    if (kind === 'poster') {
+      const src = await widget(page).locator('.quiz__poster').getAttribute('src');
+      return SHOWS.find((s) => s.image.medium === src).name;
+    }
+    if (kind === 'network') {
+      const name = await widget(page).locator('.quiz__q strong').textContent();
+      const show = SHOWS.find((s) => s.name === name);
+      return (show.network || show.webChannel).name;
+    }
+    throw new Error(`unexpected question kind ${kind}`);
+  }
+  const option = (page, label) => widget(page).locator('[data-quiz-opt]').filter({ has: page.getByText(label, { exact: true }) });
+
+  test('asks every kind the home page shows support, once per round', async ({ page }) => {
     await page.goto('/');
-    const ago = new Date().getFullYear() - 2020;
-    // With an empty list, the "your list" fact is skipped, leaving 8.
-    const facts = await collect(page, 8);
-    expect(new Set(facts).size).toBe(8);
-    expect(facts).toEqual(expect.arrayContaining([
-      `The oldest show on the home page, Alpha Drama, premiered in 2020: ${ago} years ago.`,
-      'Drama is the most common genre on the home page: 3 of 4 shows (75%).',
-      'CBS has more shows on the home page than any other network or streaming service: 2 of them.',
-      'Alpha Drama is the highest-rated show on the home page, at 8.0 out of 10 on TVMaze.',
-      '25% of the shows on the home page have ended. 3 are still running.',
-      'The shows on the home page come from 2 countries. The most, 2, are from United States.',
-      'Alpha Drama has the longest episodes on the home page, averaging 60 minutes.',
-      expect.stringMatching(/^\w+ \w+ has aired 30 episodes\. Watched back-to-back, that’s 1 day and 1 hour\.$/),
-    ]));
+    await expect(quiz(page)).toBeVisible();
+    // All fixture shows premiered in 2020 with the same rating, so "Which came
+    // first?" and "Higher rated?" can't be asked; the other four come up once each.
+    const kinds = [await kindOf(page)];
+    for (let i = 0; i < 3; i++) {
+      await nextQuestion(page);
+      kinds.push(await kindOf(page));
+    }
+    expect(kinds.sort()).toEqual(['character', 'network', 'poster', 'year']);
+    await expect(widget(page).locator('[data-quiz-opt]')).toHaveCount(3);
+    await expect(action(page)).toHaveText('Skip');
   });
 
-  test('includes a fact about your list once it has a couple of shows', async ({ page }) => {
+  test('a right answer builds the streak, a wrong one resets it, and the best is kept', async ({ page }) => {
     await page.goto('/');
-    for (const name of ['Alpha Drama', 'Delta Drama']) {
-      await cards(page).filter({ hasText: name }).locator('[data-watch-toggle]').click();
+    await expect(quiz(page)).toBeVisible();
+
+    for (const n of [1, 2]) {
+      const right = await correctAnswer(page);
+      await option(page, right).click();
+      await expect(option(page, right)).toHaveClass(/is-correct/);
+      await expect(widget(page).locator('.quiz__verdict')).toHaveText('Correct!');
+      await expect(streak(page)).toHaveText(String(n));
+      await expect(action(page)).toHaveText('Next question');
+      await expect(action(page)).toBeFocused();
+      await nextQuestion(page);
     }
-    const facts = await collect(page, 9);
-    expect(facts).toContain('1 of the 2 shows in your list is still running.');
+
+    const right = await correctAnswer(page);
+    const wrong = widget(page).locator('[data-quiz-opt]').filter({ hasNotText: right }).first();
+    await wrong.click();
+    await expect(wrong).toHaveClass(/is-wrong/);
+    await expect(option(page, right)).toHaveClass(/is-correct/);
+    await expect(widget(page).locator('.quiz__verdict')).toHaveText('Not quite.');
+    await expect(streak(page)).toHaveText('0');
+    // Every option is locked once answered.
+    await expect(widget(page).locator('[data-quiz-opt]:enabled')).toHaveCount(0);
+    await expect(widget(page).locator('[data-quiz-stats]')).toHaveText('Best streak 2 · 2 of 3 right');
+
+    await page.reload();
+    await expect(widget(page).locator('[data-quiz-stats]')).toHaveText('Best streak 2 · 2 of 3 right');
   });
 
-  test('show names in a fact open their details', async ({ page }) => {
+  test('cheers at three in a row', async ({ page }) => {
     await page.goto('/');
-    await expect(another(page)).toBeEnabled();
-    // Click until a fact names a show.
-    while (!(await fact(page).locator('[data-trivia-show]').count())) {
-      const before = await fact(page).textContent();
-      await another(page).click();
-      await expect(fact(page)).not.toHaveText(before);
+    await expect(quiz(page)).toBeVisible();
+    for (let n = 1; n <= 3; n++) {
+      await option(page, await correctAnswer(page)).click();
+      if (n < 3) await nextQuestion(page);
     }
-    const link = fact(page).locator('[data-trivia-show]');
+    await expect(page.locator('.toast')).toContainText('3 in a row. Hat trick!');
+  });
+
+  test('the poster zoom reveals the whole poster once answered', async ({ page }) => {
+    await page.goto('/');
+    await expect(quiz(page)).toBeVisible();
+    while ((await kindOf(page)) !== 'poster') await nextQuestion(page);
+    const art = widget(page).locator('[data-quiz-art]');
+    await expect(art).not.toHaveClass(/is-revealed/);
+    await widget(page).locator('[data-quiz-opt]').first().click();
+    await expect(art).toHaveClass(/is-revealed/);
+  });
+
+  test('a poster zoom whose image fails to load skips to another question', async ({ page }) => {
+    // With every poster broken, no poster zoom should stay on screen.
+    await page.route('https://static.tvmaze.com/**', (route) => route.fulfill({ status: 404 }));
+    await page.goto('/');
+    await expect(quiz(page)).toBeVisible();
+    for (let i = 0; i < 6; i++) {
+      await expect(async () => expect(await kindOf(page)).not.toBe('poster')).toPass();
+      await action(page).click();
+      await expect(action(page)).toBeEnabled();
+    }
+  });
+
+  test('show names in the reveal open their details', async ({ page }) => {
+    await page.goto('/');
+    await expect(quiz(page)).toBeVisible();
+    // Names only become links after answering, so they can't give the answer away.
+    await expect(widget(page).locator('[data-trivia-show]')).toHaveCount(0);
+    await widget(page).locator('[data-quiz-opt]').first().click();
+    const link = widget(page).locator('[data-quiz-reveal] [data-trivia-show]').first();
     const name = await link.textContent();
     await link.click();
     await expect(page.locator('[data-modal-title]')).toHaveText(name);

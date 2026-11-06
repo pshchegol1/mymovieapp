@@ -1,7 +1,7 @@
 import { escapeHtml } from '../util/dom.js';
 import { fetchSchedule, fetchNextEpisode, localDate, showImage } from '../api.js';
 import { getWatchlist, isInWatchlist, toggleWatchlist, subscribe } from '../storage.js';
-import { episodeLabel } from '../util/episode.js';
+import { episodeLabel, episodeText } from '../util/episode.js';
 import { mapLimit } from '../util/async.js';
 import * as modal from './modal.js';
 import * as toast from './toast.js';
@@ -12,7 +12,10 @@ const DAYS_PER_BATCH = 3;
 const BAR_WINDOW_MS = 7 * 86400000; // the bar fills over the final week
 const SKIP_TYPES = new Set(['Sports', 'News', 'Talk Show']);
 
-const NEXT_COUNT = 5;
+const NEXT_COUNT = 6;
+const WEEK_MS = 7 * 86400000;
+const SUGGEST_COUNT = 3;
+const CHIP_WITHIN_MS = 12 * 3600000; // further out, the day heading and time say enough
 const NEXT_LOOKUP_MAX = 20; // watchlist shows checked, to stay inside TVMaze's rate limit
 const NEXT_CONCURRENCY = 3;
 
@@ -20,6 +23,8 @@ let premieres = [];
 let nextEps = [];
 let nextKey = null;
 let nextReq = 0;
+let catalog = [];
+let suggestions = [];
 
 // Next few season premieres (episode 1) airing in the US, soonest first.
 // Days are fetched a few at a time and we stop as soon as we have enough.
@@ -90,31 +95,220 @@ function note(listEl, text) {
   listEl.innerHTML = `<li class="countdown-item countdown-item--note">${escapeHtml(text)}</li>`;
 }
 
-// One countdown row; `sub` is the small line under the title.
-function countdownItemHTML(idx, title, sub, label) {
+// ---- Your next episodes: an "Up next" card, then a mini TV guide by day ----
+
+const networkOf = (show) => (typeof show.network === 'string' ? show.network : show.network?.name)
+  || show.webChannel?.name || '';
+const runtimeOf = (x) => x.ep.runtime || x.show.runtime || x.show.averageRuntime || 0;
+const isLive = (x, now = Date.now()) => x.airs <= now && now < x.airs + (runtimeOf(x) || 30) * 60000;
+
+// "Season premiere", "Series premiere" or "Special"; null for a regular episode.
+// `short` fits the narrow guide rows.
+function episodeBadge(ep) {
+  if (ep.type === 'significant_special') return { cls: 'special', text: 'Special', short: 'Special' };
+  if (ep.number === 1) return ep.season === 1
+    ? { cls: 'new', text: 'Series premiere', short: 'New show' }
+    : { cls: 'new', text: 'Season premiere', short: 'Premiere' };
+  return null;
+}
+
+function dayKey(ms) {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+// "Tonight · 8:00 PM · CBS", or the date instead of "Tonight" further out.
+function whenLine(x) {
+  return [dayWord(x.airs) || shortDate(x.airs), timeOf(x.airs), networkOf(x.show)].filter(Boolean).join(' · ');
+}
+
+function hoursMinutes(min) {
+  const h = Math.floor(min / 60);
+  const m = Math.round(min % 60);
+  return h ? `${h}h${m ? ` ${m}m` : ''}` : `${m}m`;
+}
+
+// "This week: 5 episodes · 3h 40m of TV".
+function summaryText(items) {
+  const week = items.filter((x) => x.airs - Date.now() < WEEK_MS);
+  if (!week.length) return `Nothing this week · next one ${shortLeft(items[0].airs)}`;
+  const minutes = week.reduce((sum, x) => sum + runtimeOf(x), 0);
+  return `This week: ${week.length} episode${week.length === 1 ? '' : 's'}${minutes ? ` · ${hoursMinutes(minutes)} of TV` : ''}`;
+}
+
+// Big clock on the Up next card: "21:16:29", with a day count in front when needed.
+function clockText(airs) {
+  const left = parts(airs);
+  if (!left) return null;
+  const [d, h, m, sec] = left;
+  return `${d ? `${d}d ` : ''}${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
+
+function nextLabel(x) {
+  const code = episodeLabel(x.ep);
+  const network = networkOf(x.show);
+  return `${x.show.name}${code ? `, ${code}` : ''}, ${shortDate(x.airs)} at ${timeOf(x.airs)}${network ? ` on ${network}` : ''}. Open details`;
+}
+
+function badgeHTML(ep, short = false) {
+  const b = episodeBadge(ep);
+  return b ? `<span class="nx-badge nx-badge--${b.cls}" title="${b.text}">${short ? b.short : b.text}</span>` : '';
+}
+
+function featureHTML(x) {
+  const still = x.ep.image?.original || x.ep.image?.medium;
+  const art = still
+    ? `<img class="nx-feature__img" src="${escapeHtml(still)}" alt="">`
+    : `<img class="nx-feature__img nx-feature__img--poster" src="${escapeHtml(showImage(x.show))}" alt="">`;
+  const ep = episodeText(x.ep);
   return `
-    <li class="countdown-item">
-      <button type="button" class="countdown-item__title" data-countdown-idx="${idx}"
-              aria-label="${escapeHtml(label)}">
-        ${escapeHtml(title)} <span class="countdown-item__season">${escapeHtml(sub)}</span>
+    <li class="nx-feature" data-nx="0">
+      <button type="button" class="nx-feature__main" data-countdown-idx="0" aria-label="${escapeHtml(nextLabel(x))}">
+        <span class="nx-feature__art${still ? '' : ' nx-feature__art--poster'}"
+              style="--poster: url(${escapeHtml(JSON.stringify(showImage(x.show)))})">
+          ${art}
+          <span class="nx-feature__kicker" data-nx-kicker>Up next</span>
+          ${badgeHTML(x.ep)}
+        </span>
+        <span class="nx-feature__title">${escapeHtml(x.show.name)}</span>
+        ${ep ? `<span class="nx-feature__ep">${escapeHtml(ep)}</span>` : ''}
       </button>
-      <span class="countdown-item__time" data-countdown-time></span>
-      <div class="countdown-item__bar"><div class="countdown-item__fill" data-countdown-fill></div></div>
+      <div class="nx-feature__foot">
+        <span class="nx-feature__when">${escapeHtml(whenLine(x))}</span>
+        <span class="nx-clock" role="timer" data-nx-clock></span>
+      </div>
+      <button type="button" class="nx-cal" data-nx-cal="0" aria-label="Add ${escapeHtml(x.show.name)} to your calendar">
+        <i class="fa-regular fa-calendar-plus" aria-hidden="true"></i><span>Add to calendar</span>
+      </button>
     </li>`;
 }
 
-// Update only the changing text/bar widths instead of rebuilding the list.
-function tick(listEl, items) {
-  listEl.querySelectorAll('[data-countdown-idx]').forEach((btn) => {
-    const p = items[Number(btn.dataset.countdownIdx)];
-    if (!p) return;
-    const item = btn.closest('.countdown-item');
-    const left = timeLeft(p.airs);
-    const timeEl = item.querySelector('[data-countdown-time]');
-    timeEl.textContent = left || 'Airing now';
-    timeEl.classList.toggle('countdown-item__time--live', !left);
-    item.querySelector('[data-countdown-fill]').style.width = `${barPercent(p.airs)}%`;
+// `sameSlot`: the row above airs at the same time, so the time isn't repeated.
+function rowHTML(x, i, sameSlot) {
+  const [time, ampm] = sameSlot ? ['', ''] : timeOf(x.airs).split(' ');
+  const ep = episodeText(x.ep) || networkOf(x.show);
+  return `
+    <li class="nx-item" data-nx="${i}">
+      <button type="button" class="nx-item__main" data-countdown-idx="${i}" aria-label="${escapeHtml(nextLabel(x))}">
+        <span class="nx-item__time">${escapeHtml(time)}${ampm ? `<small>${escapeHtml(ampm)}</small>` : ''}</span>
+        <img class="nx-item__poster" src="${escapeHtml(showImage(x.show))}" alt="" loading="lazy">
+        <span class="nx-item__info">
+          <span class="nx-item__title">${escapeHtml(x.show.name)}</span>
+          ${badgeHTML(x.ep, true)}
+          <span class="nx-item__ep">${escapeHtml(ep)}</span>
+        </span>
+      </button>
+      <span class="nx-chip" data-nx-chip></span>
+    </li>`;
+}
+
+// The Up next card, then the rest grouped under day headings.
+function renderNextEpisodes(listEl, summaryEl) {
+  let html = featureHTML(nextEps[0]);
+  let day = null;
+  const slots = new Set();
+  nextEps.forEach((x, i) => {
+    if (i === 0) return;
+    if (dayKey(x.airs) !== day) {
+      day = dayKey(x.airs);
+      const word = dayWord(x.airs);
+      html += `<li class="nx-day" aria-hidden="true"><span>${word || shortDate(x.airs).split(',')[0]}</span>${word ? shortDate(x.airs) : shortDate(x.airs).split(', ')[1]}</li>`;
+    }
+    // Several of your shows in the same slot: one note, before the first of them.
+    const slot = nextEps.filter((y) => y.airs === x.airs);
+    if (slot.length > 1 && !slots.has(x.airs)) {
+      slots.add(x.airs);
+      const n = slot.length === 2 ? 'Both' : `${slot.length} of your shows`;
+      const verb = slot.length === 2 ? `${escapeHtml(slot[0].show.name)} and ${escapeHtml(slot[1].show.name)} air` : 'air';
+      html += `<li class="nx-clash"><i class="fa-solid fa-bolt" aria-hidden="true"></i>
+        <span>${slot.length === 2 ? verb : `${n} ${verb}`} at ${timeOf(x.airs)}. Time to pick one!</span></li>`;
+    }
+    html += rowHTML(x, i, i > 1 && nextEps[i - 1].airs === x.airs);
   });
+  listEl.innerHTML = html;
+  if (summaryEl) {
+    summaryEl.textContent = summaryText(nextEps);
+    summaryEl.hidden = false;
+  }
+  tickNext(listEl);
+}
+
+// Update the clock, chips and live state in place.
+function tickNext(listEl) {
+  const now = Date.now();
+  listEl.querySelectorAll('[data-nx]').forEach((item) => {
+    const x = nextEps[Number(item.dataset.nx)];
+    if (!x) return;
+    const live = isLive(x, now);
+    item.classList.toggle('is-live', live);
+    const clock = item.querySelector('[data-nx-clock]');
+    if (clock) {
+      clock.textContent = live ? 'On now' : (clockText(x.airs) || 'Starting');
+      item.querySelector('[data-nx-kicker]').textContent = live ? 'Airing now' : 'Up next';
+    }
+    const chip = item.querySelector('[data-nx-chip]');
+    if (chip) chip.textContent = live ? 'Live' : (x.airs - now < CHIP_WITHIN_MS && shortLeft(x.airs)) || '';
+  });
+}
+
+// A one-event calendar file for the episode, using its real runtime.
+function downloadIcs(x) {
+  const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const text = (str) => String(str).replace(/[\\,;]/g, (c) => `\\${c}`).replace(/\n/g, '\\n');
+  const title = `${x.show.name}${episodeLabel(x.ep) ? ` (${episodeLabel(x.ep).replace(/ · /g, '')})` : ''}`;
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//MovieMatrix//Next episodes//EN',
+    'BEGIN:VEVENT',
+    `UID:mm-${x.show.id}-${x.ep.id || x.airs}@moviematrix`,
+    `DTSTAMP:${stamp(Date.now())}`,
+    `DTSTART:${stamp(x.airs)}`,
+    `DTEND:${stamp(x.airs + (runtimeOf(x) || 60) * 60000)}`,
+    `SUMMARY:${text(title)}`,
+    `DESCRIPTION:${text([episodeText(x.ep), networkOf(x.show)].filter(Boolean).join(' on '))}`,
+    'BEGIN:VALARM', 'TRIGGER:-PT15M', 'ACTION:DISPLAY', `DESCRIPTION:${text(title)} starts in 15 minutes`, 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR',
+  ].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  a.download = `${x.show.name.replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'episode'}.ics`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast.show(`Calendar event for “${x.show.name}” downloaded`, { icon: 'fa-regular fa-calendar-check' });
+}
+
+// Empty My list: suggest a few popular running shows to follow in one click.
+function emptyHTML() {
+  suggestions = catalog
+    .filter((s) => s.status === 'Running' && !isInWatchlist(s.id))
+    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+    .slice(0, SUGGEST_COUNT);
+  return `
+    <li class="nx-empty">
+      <span class="nx-empty__icon" aria-hidden="true"><i class="fa-solid fa-tv"></i></span>
+      <p class="nx-empty__text"><strong>Your couch schedule is empty.</strong> Follow a show and its new episodes will line up here.</p>
+    </li>
+    ${suggestions.map((s, i) => `
+    <li class="nx-suggest">
+      <img class="nx-item__poster" src="${escapeHtml(showImage(s))}" alt="" loading="lazy">
+      <span class="nx-item__info">
+        <span class="nx-item__title">${escapeHtml(s.name)}</span>
+        <span class="nx-item__ep">${escapeHtml([networkOf(s), s.genres?.[0]].filter(Boolean).join(' · '))}</span>
+      </span>
+      <button type="button" class="premiere__follow" data-nx-follow="${i}" aria-label="Follow ${escapeHtml(s.name)}: add it to My list">
+        <i class="fa-regular fa-bell" aria-hidden="true"></i><span>Follow</span>
+      </button>
+    </li>`).join('')}`;
+}
+
+function onNextClick(e) {
+  const cal = e.target.closest('[data-nx-cal]');
+  if (cal) { downloadIcs(nextEps[Number(cal.dataset.nxCal)]); return; }
+  const follow = e.target.closest('[data-nx-follow]');
+  const s = follow && suggestions[Number(follow.dataset.nxFollow)];
+  if (s) {
+    toggleWatchlist(s);
+    toast.show(`Following “${s.name}”`, { icon: 'fa-solid fa-bell' });
+  }
 }
 
 // Clicking a row opens that show; `items` is read at click time since lists reload.
@@ -244,15 +438,16 @@ function onFollowClick(e) {
 
 // Next episode of each show in My list, soonest first. Re-runs whenever storage
 // changes, but only refetches when the set of shows to check has changed.
-async function loadNextEpisodes(listEl) {
+async function loadNextEpisodes(listEl, summaryEl) {
   const shows = getWatchlist().filter((s) => s.status !== 'Ended').slice(0, NEXT_LOOKUP_MAX);
   const key = shows.map((s) => s.id).join(',');
   if (key === nextKey) return;
   nextKey = key;
   const reqId = ++nextReq;
+  if (summaryEl) summaryEl.hidden = true;
   if (!shows.length) {
     nextEps = [];
-    note(listEl, 'Add shows to My list to see when their next episodes air.');
+    listEl.innerHTML = emptyHTML();
     return;
   }
   if (!nextEps.length) note(listEl, 'Loading…');
@@ -267,8 +462,8 @@ async function loadNextEpisodes(listEl) {
   const now = Date.now();
   nextEps = shows
     .map((show, i) => ({ show, ep: eps[i], airs: Date.parse(eps[i]?.airstamp) }))
-    .filter((x) => x.airs > now)
-    .sort((a, b) => a.airs - b.airs)
+    .filter((x) => x.airs > now || (x.airs && isLive(x, now)))
+    .sort((a, b) => a.airs - b.airs || a.show.name.localeCompare(b.show.name))
     .slice(0, NEXT_COUNT);
   if (!nextEps.length) {
     note(listEl, failed === shows.length
@@ -276,16 +471,18 @@ async function loadNextEpisodes(listEl) {
       : 'No upcoming episodes announced for your shows.');
     return;
   }
-  listEl.innerHTML = nextEps.map((x, i) => {
-    const date = shortDate(x.airs);
-    const code = episodeLabel(x.ep);
-    return countdownItemHTML(i, x.show.name, [code, date].filter(Boolean).join(' · '),
-      `${x.show.name}, ${code ? `${code} ` : ''}airs ${date}. Open details`);
-  }).join('');
-  tick(listEl, nextEps);
+  renderNextEpisodes(listEl, summaryEl);
 }
 
-export function init({ nextList, countdownList }) {
+// The home page catalog, used to suggest shows when My list is empty.
+export function setCatalog(shows) {
+  catalog = shows || [];
+  if (nextListEl && !getWatchlist().length) nextListEl.innerHTML = emptyHTML();
+}
+
+let nextListEl = null;
+
+export function init({ nextList, nextSummary, countdownList }) {
   initPremieres(countdownList);
   openOnClick(countdownList, () => premieres);
   countdownList.addEventListener('click', onFollowClick);
@@ -293,14 +490,16 @@ export function init({ nextList, countdownList }) {
     .forEach((btn) => syncFollow(btn, premieres[Number(btn.dataset.premiereFollow)])));
 
   if (nextList) {
-    loadNextEpisodes(nextList);
-    subscribe(() => loadNextEpisodes(nextList));
+    nextListEl = nextList;
+    loadNextEpisodes(nextList, nextSummary);
+    subscribe(() => loadNextEpisodes(nextList, nextSummary));
     openOnClick(nextList, () => nextEps);
+    nextList.addEventListener('click', onNextClick);
   }
 
   setInterval(() => {
     if (document.hidden) return;
     tickPremieres(countdownList);
-    if (nextList) tick(nextList, nextEps);
+    if (nextList) tickNext(nextList);
   }, 1000);
 }

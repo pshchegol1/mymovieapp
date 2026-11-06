@@ -122,6 +122,7 @@ function renderSearchStatus() {
 
 sidebar.init({
   nextList: $('[data-next-episodes]'),
+  nextSummary: $('[data-next-summary]'),
   countdownList: $('[data-countdown-items]'),
 });
 onThisDay.init({ root: $('[data-on-this-day]') });
@@ -268,6 +269,7 @@ schedule.init({ root: $('[data-schedule]') });
     }
     carousel.setShows(catTabs.applyCategory(initialShows, 'trending').slice(0, 8), initialShows);
     trivia.setShows(initialShows);
+    sidebar.setCatalog(initialShows);
   } catch (err) {
     console.error('Failed to load shows', err);
     grid.showError('Failed to load shows. Check your connection.');

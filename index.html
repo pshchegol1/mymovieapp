@@ -71,12 +71,13 @@
 
   <main class="layout">
     <aside class="sidebar" aria-label="Movie extras">
-      <section class="widget glass widget--countdown" aria-labelledby="next-title">
+      <section class="widget glass widget--next" aria-labelledby="next-title">
         <header class="widget__header">
-          <i class="fa-solid fa-forward" aria-hidden="true"></i>
+          <i class="fa-solid fa-couch" aria-hidden="true"></i>
           <h2 id="next-title" class="widget__title">Your next episodes</h2>
         </header>
-        <ol class="widget__body" data-next-episodes></ol>
+        <p class="nx-summary" data-next-summary hidden></p>
+        <ol class="widget__body nx-list" data-next-episodes></ol>
       </section>
 
       <section class="widget glass widget--countdown" aria-labelledby="cd-title">
@@ -100,12 +101,12 @@
 
       <section class="widget glass widget--fact" aria-labelledby="ff-title" data-trivia>
         <header class="widget__header">
-          <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+          <i class="fa-solid fa-brain" aria-hidden="true"></i>
           <h2 id="ff-title" class="widget__title">TV trivia</h2>
         </header>
-        <div class="widget__body" data-trivia-body aria-live="polite"><p class="trivia__fact">Loading…</p></div>
+        <div class="widget__body" data-trivia-body aria-live="polite"><p class="quiz__note">Loading a question…</p></div>
         <button type="button" class="btn btn--ghost btn--sm widget__action" data-trivia-more disabled>
-          <i class="fa-solid fa-rotate" aria-hidden="true"></i> Another fact
+          <i class="fa-solid fa-forward" aria-hidden="true"></i> Skip
         </button>
       </section>
     </aside>

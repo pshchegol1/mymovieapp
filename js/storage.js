@@ -4,6 +4,7 @@ const KEYS = {
   ratings: 'mm.ratings',
   rated: 'mm.rated',
   theme: 'mm.theme',
+  trivia: 'mm.trivia',
 };
 
 const RECENT_MAX = 12;
@@ -114,6 +115,12 @@ export function saveRatedShows(shows) {
   writeJSON(KEYS.rated, rated);
   emit();
 }
+
+// TV trivia quiz: the best streak ever, and totals across sessions.
+export function getTriviaStats() {
+  return { best: 0, answered: 0, correct: 0, ...readJSON(KEYS.trivia, {}) };
+}
+export function saveTriviaStats(stats) { writeJSON(KEYS.trivia, stats); }
 
 export function getTheme() {
   let v = null;

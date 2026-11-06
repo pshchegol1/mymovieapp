@@ -183,3 +183,11 @@
 [data-theme="dark"] .genre-pill[aria-pressed="true"],
 [data-theme="dark"] .primary-nav__link.is-active { color: white; }
 [data-theme="dark"] .rate { --rate-empty: hsl(220 20% 80% / 0.28); --rate-on: hsl(var(--h-amber)); }
+[data-theme="dark"] .nx-chip { color: hsl(340 90% 78%); }
+[data-theme="dark"] .nx-clash { color: hsl(38 95% 72%); }
+[data-theme="dark"] .quiz__kind { color: hsl(38 95% 70%); }
+[data-theme="dark"] .quiz__q strong { color: hsl(38 95% 70%); }
+[data-theme="dark"] .quiz__verdict--right,
+[data-theme="dark"] .quiz__opt:not(.quiz__opt--poster).is-correct .quiz__mark { color: hsl(150 60% 60%); }
+[data-theme="dark"] .quiz__verdict--wrong,
+[data-theme="dark"] .quiz__opt:not(.quiz__opt--poster).is-wrong .quiz__mark { color: hsl(0 85% 70%); }
