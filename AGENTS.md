@@ -9,7 +9,7 @@ MovieMatrix: a TV show browser in plain HTML, CSS and JavaScript ES modules. No
 framework, no bundler, no build step, no backend. Show data comes from the
 public TVMaze API (no key). Trailers come from TMDB and need an optional key in
 `js/config.js`. Without it, "Watch trailer" falls back to a YouTube search link.
-User data (My list, ratings, recently viewed, theme) lives in `localStorage`.
+User data (My list, ratings, watched episodes, recently viewed, theme) lives in `localStorage`.
 See `README.md` for the feature list and the hash-based URLs (`#/show/431` etc.).
 
 ## Layout
@@ -22,7 +22,7 @@ css/components/       one stylesheet per UI component
 js/app.js             entry point: wires modules, routes, grid state
 js/api.js             TVMaze / TMDB requests (cached, 429 retry) and helpers
 js/router.js          tiny hash router
-js/storage.js         localStorage: watchlist, recent, ratings, theme
+js/storage.js         localStorage: watchlist, recent, ratings, watched episodes, theme
 js/ui/                one module per UI component
 js/util/dom.js        $, $$, escapeHtml, the `html` tagged template, raw()
 tests/app.spec.js     Playwright end-to-end tests

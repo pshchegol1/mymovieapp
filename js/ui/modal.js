@@ -1,7 +1,7 @@
 import { $, escapeHtml, stripTags } from '../util/dom.js';
 import { showImage, personImage, fetchCast, fetchSeasons, fetchSeasonEpisodes, fetchShowEpisodes, fetchNextEpisode, fetchTrailerKey, hasTrailerSource } from '../api.js';
 import { episodeText, relativeTime } from '../util/episode.js';
-import { isInWatchlist, toggleWatchlist, getRating, setRating, pushRecent, subscribe } from '../storage.js';
+import { isInWatchlist, toggleWatchlist, getRating, setRating, pushRecent, subscribe, isEpisodeWatched, toggleEpisodeWatched } from '../storage.js';
 import * as toast from './toast.js';
 import * as heatmap from './episode-heatmap.js';
 
@@ -214,7 +214,19 @@ function highlightReveal(seasonNum) {
   el.classList.add('is-flash');
 }
 
-async function loadSeasons(showId) {
+// The watched toggle's icon and label; its aria-label stays the same.
+function watchStateHTML(on) {
+  return `<i class="fa-${on ? 'solid fa-circle-check' : 'regular fa-circle'}" aria-hidden="true"></i><span>${on ? 'Watched' : 'Mark watched'}</span>`;
+}
+
+function setEpisodeWatched(btn, on) {
+  btn.setAttribute('aria-pressed', String(on));
+  btn.innerHTML = watchStateHTML(on);
+  btn.closest('.episode')?.classList.toggle('is-watched', on);
+}
+
+// `startSeason`: the season tab to open first (the first season by default).
+async function loadSeasons(showId, startSeason) {
   const mount = bodyEl.querySelector('[data-episodes]');
   if (!mount) return;
   try {
@@ -223,10 +235,11 @@ async function loadSeasons(showId) {
       mount.innerHTML = '<p class="episodes__empty">No seasons listed.</p>';
       return;
     }
+    const start = Math.max(0, seasons.findIndex((s) => s.number === startSeason));
     // Only the selected tab is in the Tab order; arrow keys move between tabs.
     const tabs = seasons.map((s, i) => `
       <button type="button" class="episodes__tab" role="tab" id="season-tab-${s.id}"
-              aria-selected="${i === 0}" aria-controls="episodes-panel" tabindex="${i === 0 ? 0 : -1}"
+              aria-selected="${i === start}" aria-controls="episodes-panel" tabindex="${i === start ? 0 : -1}"
               data-season-id="${s.id}" data-season-num="${s.number}">
         Season ${s.number}
       </button>
@@ -234,7 +247,7 @@ async function loadSeasons(showId) {
     mount.innerHTML = `
       <div class="episodes__tabs" role="tablist" aria-label="Seasons">${tabs}</div>
       <div class="episodes__list" id="episodes-panel" role="tabpanel" tabindex="0"
-           aria-labelledby="season-tab-${seasons[0].id}" data-episodes-list>
+           aria-labelledby="season-tab-${seasons[start].id}" data-episodes-list>
         <div class="episodes__loading">Loading…</div>
       </div>
     `;
@@ -251,8 +264,10 @@ async function loadSeasons(showId) {
           listEl.innerHTML = '<p class="episodes__empty">No episodes.</p>';
           return;
         }
-        listEl.innerHTML = eps.map((e) => `
-          <article class="episode" data-episode-num="${escapeHtml(e.number ?? '')}" tabindex="-1">
+        listEl.innerHTML = eps.map((e) => {
+          const watched = isEpisodeWatched(Number(showId), e.id);
+          return `
+          <article class="episode${watched ? ' is-watched' : ''}" data-episode-num="${escapeHtml(e.number ?? '')}" tabindex="-1">
             <div class="episode__num">${escapeHtml(e.number ?? '')}</div>
             <div class="episode__body">
               <div class="episode__title">${escapeHtml(e.name || '')}</div>
@@ -263,8 +278,13 @@ async function loadSeasons(showId) {
               </div>
               ${e.summary ? `<p class="episode__summary">${escapeHtml(stripTags(e.summary))}</p>` : ''}
             </div>
+            <button type="button" class="episode__watch" data-watch-episode="${escapeHtml(e.id)}"
+                    aria-pressed="${watched}" aria-label="Watched S${escapeHtml(e.season ?? '')} E${escapeHtml(e.number ?? '')}">
+              ${watchStateHTML(watched)}
+            </button>
           </article>
-        `).join('');
+        `;
+        }).join('');
         highlightReveal(seasonNum);
       } catch (err) {
         if (listEl.getAttribute('aria-labelledby') !== `season-tab-${seasonId}`) return;
@@ -296,7 +316,7 @@ async function loadSeasons(showId) {
       e.preventDefault();
       tabEls[next].focus();
     });
-    showSeason(seasons[0].id, seasons[0].number);
+    showSeason(seasons[start].id, seasons[start].number);
   } catch (err) {
     console.error(err);
     mount.innerHTML = '<p class="episodes__empty">Couldn’t load seasons.</p>';
@@ -413,6 +433,11 @@ async function onBodyClick(e) {
     }
     return;
   }
+  const watchBtn = e.target.closest('[data-watch-episode]');
+  if (watchBtn) {
+    setEpisodeWatched(watchBtn, toggleEpisodeWatched(show, { id: Number(watchBtn.dataset.watchEpisode) }));
+    return;
+  }
   const rateBtn = e.target.closest('[data-rate]');
   if (rateBtn) {
     const v = Number(rateBtn.dataset.rate);
@@ -448,7 +473,8 @@ export function init() {
 
 function showHash(show) { return `#/show/${show.id}`; }
 
-export function open(show, triggerEl) {
+// `reveal` ({ season, number }): start on that season and scroll to the episode.
+export function open(show, triggerEl, { reveal = null } = {}) {
   if (!modalRoot) return;
   const wasHidden = modalRoot.hidden;
   if (wasHidden) {
@@ -457,7 +483,7 @@ export function open(show, triggerEl) {
     pushedEntry = false;
   }
   currentShow = show;
-  revealTarget = null;
+  revealTarget = reveal;
   pushRecent(show);
   // Make the open show linkable without triggering the router. The first show
   // gets its own history entry so Back closes the modal; switching to a similar
@@ -472,7 +498,7 @@ export function open(show, triggerEl) {
 
   if (show.id) {
     loadCast(show.id);
-    loadSeasons(show.id);
+    loadSeasons(show.id, reveal?.season);
     loadHeatmap(show);
     loadNextEpisode(show);
   }
@@ -496,6 +522,11 @@ export function open(show, triggerEl) {
 
   const firstFocus = focusables()[0] || closeBtn;
   firstFocus.focus();
+}
+
+// The element that opened the modal is being removed: return focus to `to` instead.
+export function replaceReturnFocus(from, to) {
+  if (lastFocus === from) lastFocus = to;
 }
 
 export function close() {

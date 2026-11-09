@@ -9,6 +9,7 @@ A TV show browser built with plain HTML, CSS and JavaScript modules — no frame
 - **Search** any show on TVMaze; genre and sort filters also apply to search results
 - **Show details** with cast, seasons and episodes, similar shows, your own 1–10 rating, a share link, and an embedded trailer (needs a TMDB key, see below)
 - **Episode ratings heatmap** in show details: every episode by season, colored by its TVMaze rating, with the peak, the low and the best season called out; pick an episode to jump to it
+- **Episode tracker**: mark episodes watched in show details; **Continue watching** on the home page lists your in-progress shows with the next episode to watch and your progress, and opens the show right at that episode
 - **Person pages** for cast members, with every show they've been in
 - **My list** (watchlist), **My ratings** (sort, filter and a breakdown of your scores) and **Recently viewed**, saved in the browser
 - **Tonight** — what's airing on US TV today, plus a **Streaming** tab with today's new episodes on Netflix, Prime Video, Apple TV, Peacock and the rest (season drops grouped into one entry)
@@ -71,7 +72,7 @@ js/
   app.js              entry point: wires modules together, routes, grid state
   api.js              TVMaze requests (cached) and image/date helpers
   router.js           tiny hash router
-  storage.js          localStorage: watchlist, recent, ratings, theme
+  storage.js          localStorage: watchlist, recent, ratings, watched episodes, theme
   ui/                 one module per UI component (grid, search, modal, carousel, …)
   util/dom.js         DOM helpers ($, $$, escapeHtml)
 ```

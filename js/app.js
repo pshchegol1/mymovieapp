@@ -17,6 +17,7 @@ import * as person from './ui/person.js';
 import * as ratings from './ui/ratings.js';
 import * as onThisDay from './ui/on-this-day.js';
 import * as trivia from './ui/trivia.js';
+import * as continueWatching from './ui/continue-watching.js';
 import { renderCard, onCardEvent } from './ui/show-card.js';
 import * as router from './router.js';
 import { getWatchlist, getRecent, subscribe, clearRecent } from './storage.js';
@@ -127,6 +128,7 @@ sidebar.init({
 });
 onThisDay.init({ root: $('[data-on-this-day]') });
 trivia.init({ root: $('[data-trivia]') });
+continueWatching.init({ root: $('[data-continue-watching]') });
 
 footer.init({ root: $('[data-footer]'), shows: () => initialShows });
 toTop.init({ button: $('[data-to-top]') });

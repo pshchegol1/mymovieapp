@@ -950,3 +950,207 @@ test('theme choice persists across reloads', async ({ page }) => {
   await page.reload();
   await expect(root).toHaveAttribute('data-theme', 'dark');
 });
+
+test.describe('episode tracker', () => {
+  const toggle = (page, n) => page.locator(`[data-episode-num="${n}"] [data-watch-episode]`);
+  const section = (page) => page.locator('[data-continue-watching]');
+  const items = (page) => page.locator('[data-continue-item]');
+  const seasonTab = (page, n) => page.getByRole('tab', { name: `Season ${n}` });
+  const stored = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('mm.watched')));
+  const ids = (from, to) => EPISODES.slice(from, to).map((ep) => ep.id);
+
+  async function mark(page, n, pressed = 'true') {
+    await toggle(page, n).click();
+    await expect(toggle(page, n)).toHaveAttribute('aria-pressed', pressed);
+  }
+
+  // Seed mm.watched as { showId: [episodeIds, updatedAt] }.
+  async function seed(page, entries) {
+    const watched = Object.fromEntries(Object.entries(entries).map(([id, [episodes, updatedAt]]) => {
+      const s = SHOWS.find((x) => x.id === Number(id));
+      return [id, { show: { id: s.id, name: s.name, image: s.image }, episodes, updatedAt }];
+    }));
+    await page.addInitScript((data) => {
+      if (!localStorage.getItem('mm.watched')) localStorage.setItem('mm.watched', data);
+    }, JSON.stringify(watched));
+  }
+
+  test('each episode has a watched toggle that keeps the modal and season', async ({ page }) => {
+    await page.goto('/#/show/1');
+    await expect(toggle(page, 1)).toHaveAttribute('aria-pressed', 'false');
+    await expect(toggle(page, 1)).toHaveAccessibleName('Watched S1 E1');
+    await expect(toggle(page, 1)).toHaveText('Mark watched');
+
+    await mark(page, 1);
+    await expect(toggle(page, 1)).toHaveText('Watched');
+    await expect(toggle(page, 1)).toHaveAccessibleName('Watched S1 E1');
+    await expect(toggle(page, 1)).toBeFocused();
+    await expect(page.locator('[data-episode-num="1"]')).toHaveClass(/is-watched/);
+    await expect(modal(page)).toBeVisible();
+    await expect(seasonTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+
+    await mark(page, 1, 'false');
+    await expect(page.locator('[data-episode-num="1"]')).not.toHaveClass(/is-watched/);
+  });
+
+  test('watched episodes are stored per show, and the last unmark removes the show', async ({ page }) => {
+    await page.goto('/#/show/1');
+    await mark(page, 1);
+    await mark(page, 2);
+    const entry = (await stored(page))['1'];
+    expect(entry.episodes).toEqual(expect.arrayContaining([101, 102]));
+    expect(entry.show.name).toBe('Alpha Drama');
+    expect(typeof entry.updatedAt).toBe('number');
+
+    await mark(page, 1, 'false');
+    await mark(page, 2, 'false');
+    expect(await stored(page)).not.toHaveProperty('1');
+  });
+
+  test('watched state survives a reload, on any season', async ({ page }) => {
+    await page.goto('/#/show/1');
+    await mark(page, 1);
+    await seasonTab(page, 2).click();
+    await mark(page, 3);
+
+    await page.reload();
+    await expect(toggle(page, 1)).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggle(page, 2)).toHaveAttribute('aria-pressed', 'false');
+    await seasonTab(page, 2).click();
+    await expect(page.getByRole('tabpanel')).toContainText('Season 2 opener');
+    await expect(toggle(page, 3)).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggle(page, 1)).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('Continue watching lists a show once an episode is marked', async ({ page }) => {
+    await page.goto('/');
+    await cards(page).first().waitFor();
+    await expect(section(page)).toBeHidden();
+
+    await page.goto('/#/show/1');
+    await mark(page, 1);
+    await mark(page, 2);
+    await page.keyboard.press('Escape');
+    await expect(modal(page)).toBeHidden();
+    await expect(section(page)).toBeVisible();
+    await expect(items(page)).toHaveCount(1);
+    await expect(items(page)).toContainText('Alpha Drama');
+    await expect(items(page)).toContainText('S1 · E3 · Chapter 3');
+    await expect(items(page)).toContainText('2 of 30 watched');
+  });
+
+  test('an item opens the show at its next episode', async ({ page }) => {
+    await seed(page, { 1: [[101, 102], 1000] });
+    await page.goto('/');
+    await items(page).click();
+    await expect(page).toHaveURL(/#\/show\/1$/);
+    await expect(seasonTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('[data-episode-num="3"]')).toBeFocused();
+  });
+
+  test('the next episode can be in a later season', async ({ page }) => {
+    await seed(page, { 1: [ids(0, 10), 1000] });
+    await page.goto('/');
+    await expect(items(page)).toContainText('S2 · E1 · Season 2 opener');
+    await expect(items(page)).toContainText('10 of 30 watched');
+    await items(page).click();
+    await expect(seasonTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+    await expect(seasonTab(page, 1)).toHaveAttribute('aria-selected', 'false');
+    await expect(page.locator('[data-episode-num="1"]')).toBeFocused();
+    await expect(page.locator('[data-episode-num="1"]')).toContainText('Season 2 opener');
+
+    // Opened any other way, the show still starts on the first season.
+    await page.keyboard.press('Escape');
+    await cards(page).filter({ hasText: 'Alpha Drama' }).click();
+    await expect(seasonTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('caught-up shows are left out, and the newest is first', async ({ page }) => {
+    await seed(page, { 1: [[101], 1000], 2: [ids(0, 30), 3000], 3: [[101, 102, 103], 2000] });
+    await page.goto('/');
+    await expect(items(page)).toHaveText([/Charlie Comedy\s+S1 · E4 · Chapter 4\s+3 of 30 watched/, /Alpha Drama\s+S1 · E2 · Unrated\s+1 of 30 watched/]);
+  });
+
+  test('unaired episodes don\'t count', async ({ page }) => {
+    const future = { ...EPISODES[29], id: 311, number: 11, name: 'Not Yet', airdate: '2999-01-01' };
+    await page.route('https://api.tvmaze.com/shows/2/episodes', (route) => route.fulfill({ json: [...EPISODES, future] }));
+    await page.route('https://api.tvmaze.com/shows/3/episodes', (route) =>
+      route.fulfill({ json: [...EPISODES.slice(0, 2), { ...future, airdate: null }] }));
+    await seed(page, { 1: [[101], 1000], 2: [ids(0, 30), 2000], 3: [[101], 3000] });
+    await page.goto('/');
+    await expect(items(page)).toHaveText([/Charlie Comedy\s+S1 · E2 · Unrated\s+1 of 2 watched/, /Alpha Drama/]);
+  });
+
+  test('a show whose episodes fail to load is skipped', async ({ page }) => {
+    await page.route('https://api.tvmaze.com/shows/3/episodes', (route) => route.fulfill({ status: 500, json: {} }));
+    await seed(page, { 1: [[101], 1000], 3: [[101], 2000] });
+    await page.goto('/');
+    await expect(items(page)).toHaveText([/Alpha Drama/]);
+  });
+
+  test('marking an episode in the modal updates the row', async ({ page }) => {
+    await seed(page, { 1: [[101, 102], 1000] });
+    await page.goto('/');
+    await expect(items(page)).toContainText('2 of 30 watched');
+    await items(page).click();
+    await mark(page, 3);
+    await page.keyboard.press('Escape');
+    await expect(items(page)).toContainText('3 of 30 watched');
+    await expect(items(page)).toContainText('S1 · E4 · Chapter 4');
+  });
+
+  test('closing the details returns focus to the item, even after it updates', async ({ page }) => {
+    await seed(page, { 1: [[101, 102], 1000] });
+    await page.goto('/');
+    await items(page).focus();
+    await page.keyboard.press('Enter');
+    await mark(page, 3);
+    await page.keyboard.press('Escape');
+    await expect(items(page)).toContainText('3 of 30 watched');
+    await expect(items(page)).toBeFocused();
+  });
+
+  test('when the show is caught up, focus moves to the next item, or the browse heading', async ({ page }) => {
+    await seed(page, { 1: [ids(0, 29), 2000], 3: [[101], 1000] });
+    await page.goto('/');
+    await items(page).first().click();
+    await mark(page, 10);
+    await page.keyboard.press('Escape');
+    await expect(items(page)).toHaveText([/Charlie Comedy/]);
+    await expect(items(page)).toBeFocused();
+
+    await items(page).click();
+    await seasonTab(page, 1).click();
+    await mark(page, 1, 'false');
+    await page.keyboard.press('Escape');
+    await expect(section(page)).toBeHidden();
+    await expect(page.locator('#shows-title')).toBeFocused();
+  });
+
+  test('the toggle is a full-size tap target on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto('/#/show/1');
+    const box = await toggle(page, 1).boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(40);
+    expect(box.height).toBeGreaterThanOrEqual(40);
+    await expect(toggle(page, 1).locator('i')).toHaveClass(/fa-regular fa-circle/);
+    await mark(page, 1);
+    await expect(toggle(page, 1).locator('i')).toHaveClass(/fa-solid fa-circle-check/);
+  });
+
+  test('is only shown on the home view', async ({ page }) => {
+    await seed(page, { 1: [[101], 1000] });
+    await page.goto('/');
+    await expect(section(page)).toBeVisible();
+    await page.goto('/#/watchlist');
+    await expect(section(page)).toBeHidden();
+  });
+
+  test('scrolls sideways on a phone without widening the page', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await seed(page, { 1: [[101], 1000], 2: [[101], 2000], 3: [[101], 3000], 4: [[101], 4000] });
+    await page.goto('/');
+    await expect(items(page)).toHaveCount(4);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  });
+});

@@ -130,6 +130,15 @@
         </div>
       </section>
 
+      <div class="continue-wrap" data-view="home">
+        <section class="continue glass" aria-labelledby="continue-title" data-continue-watching hidden>
+          <header class="shows__header">
+            <h2 id="continue-title" class="shows__title">Continue watching</h2>
+          </header>
+          <ul class="continue__list" data-continue-list></ul>
+        </section>
+      </div>
+
       <section class="schedule" data-view="schedule" hidden aria-labelledby="sched-title" data-schedule>
         <header class="shows__header">
           <h2 id="sched-title" class="shows__title" data-schedule-title>On tonight</h2>
@@ -148,7 +157,7 @@
 
       <section class="shows" data-view="home" aria-labelledby="shows-title">
         <header class="shows__header">
-          <h2 id="shows-title" class="shows__title">TV shows</h2>
+          <h2 id="shows-title" class="shows__title" tabindex="-1">TV shows</h2>
         </header>
         <div class="search-status" data-search-status hidden>
           <span>Results for “<strong data-search-term></strong>”</span>
