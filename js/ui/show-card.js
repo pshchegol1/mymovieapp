@@ -23,6 +23,7 @@ export function renderCard(show, idx) {
   // Read the year straight from "YYYY-MM-DD": new Date() would parse it as UTC,
   // which is the previous day (and year, on Jan 1) west of Greenwich.
   const premiered = show.premiered ? show.premiered.slice(0, 4) : '—';
+  const runtime = show.runtime || show.averageRuntime;
   const inList = isInWatchlist(show.id);
   const myRating = getRating(show.id);
 
@@ -43,7 +44,11 @@ export function renderCard(show, idx) {
       </div>
       <div class="show-card__body">
         <h3 class="show-card__title">${escapeHtml(show.name)}</h3>
-        <span class="show-card__premiered">${escapeHtml(premiered)}</span>
+        <div class="show-card__facts">
+          <span class="show-card__premiered">${escapeHtml(premiered)}</span>
+          ${runtime ? `<span class="show-card__sep" aria-hidden="true">·</span>
+          <span class="show-card__runtime">${escapeHtml(runtime)} min</span>` : ''}
+        </div>
         <div class="show-card__meta">${badgesFor(show.genres)}</div>
       </div>
     </article>`;

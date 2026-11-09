@@ -83,7 +83,12 @@
   gap: var(--space-1);
   margin-top: auto;
 }
-.show-card__premiered {
+.show-card__facts {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  white-space: nowrap;
+  overflow: hidden;
   font-size: var(--fs-xs);
   color: var(--color-text-soft);
 }
