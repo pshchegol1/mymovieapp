@@ -20,6 +20,18 @@ test.describe('west of UTC', () => {
   });
 });
 
+test('cards show the runtime next to the year, when known', async ({ page }) => {
+  await page.goto('/');
+  const alpha = cards(page).filter({ hasText: 'Alpha Drama' });
+  await expect(alpha.locator('.show-card__premiered')).toHaveText('2020');
+  await expect(alpha.locator('.show-card__runtime')).toHaveText('60 min');
+
+  const delta = cards(page).filter({ hasText: 'Delta Drama' });
+  await expect(delta.locator('.show-card__premiered')).toHaveText('2020');
+  await expect(delta.locator('.show-card__runtime')).toHaveCount(0);
+  await expect(delta.locator('.show-card__sep')).toHaveCount(0);
+});
+
 test('search updates the URL and filters results', async ({ page }) => {
   await page.goto('/');
   await page.locator('[data-search-input]').fill('drama');
