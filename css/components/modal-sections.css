@@ -277,7 +277,14 @@
 .episode.is-watched .episode__num,
 .episode.is-watched .episode__body { opacity: 0.55; }
 
+/* Icon only on phones, with a full-size tap target. */
 @media (max-width: 599px) {
+  .episode__watch {
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    font-size: var(--fs-base);
+  }
   .episode__watch span { display: none; }
 }
 

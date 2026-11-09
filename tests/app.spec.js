@@ -1099,6 +1099,45 @@ test.describe('episode tracker', () => {
     await expect(items(page)).toContainText('S1 · E4 · Chapter 4');
   });
 
+  test('closing the details returns focus to the item, even after it updates', async ({ page }) => {
+    await seed(page, { 1: [[101, 102], 1000] });
+    await page.goto('/');
+    await items(page).focus();
+    await page.keyboard.press('Enter');
+    await mark(page, 3);
+    await page.keyboard.press('Escape');
+    await expect(items(page)).toContainText('3 of 30 watched');
+    await expect(items(page)).toBeFocused();
+  });
+
+  test('when the show is caught up, focus moves to the next item, or the browse heading', async ({ page }) => {
+    await seed(page, { 1: [ids(0, 29), 2000], 3: [[101], 1000] });
+    await page.goto('/');
+    await items(page).first().click();
+    await mark(page, 10);
+    await page.keyboard.press('Escape');
+    await expect(items(page)).toHaveText([/Charlie Comedy/]);
+    await expect(items(page)).toBeFocused();
+
+    await items(page).click();
+    await seasonTab(page, 1).click();
+    await mark(page, 1, 'false');
+    await page.keyboard.press('Escape');
+    await expect(section(page)).toBeHidden();
+    await expect(page.locator('#shows-title')).toBeFocused();
+  });
+
+  test('the toggle is a full-size tap target on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto('/#/show/1');
+    const box = await toggle(page, 1).boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(40);
+    expect(box.height).toBeGreaterThanOrEqual(40);
+    await expect(toggle(page, 1).locator('i')).toHaveClass(/fa-regular fa-circle/);
+    await mark(page, 1);
+    await expect(toggle(page, 1).locator('i')).toHaveClass(/fa-solid fa-circle-check/);
+  });
+
   test('is only shown on the home view', async ({ page }) => {
     await seed(page, { 1: [[101], 1000] });
     await page.goto('/');
