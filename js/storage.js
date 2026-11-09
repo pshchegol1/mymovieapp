@@ -5,6 +5,7 @@ const KEYS = {
   rated: 'mm.rated',
   theme: 'mm.theme',
   trivia: 'mm.trivia',
+  watched: 'mm.watched',
 };
 
 const RECENT_MAX = 12;
@@ -114,6 +115,34 @@ export function saveRatedShows(shows) {
   }
   writeJSON(KEYS.rated, rated);
   emit();
+}
+
+// Watched episodes as { showId: { show, episodes: [episodeId, ...], updatedAt } }.
+// A show's entry goes away with its last watched episode.
+function getWatched() {
+  const all = readJSON(KEYS.watched, {});
+  return all && typeof all === 'object' && !Array.isArray(all) ? all : {};
+}
+export function isEpisodeWatched(showId, episodeId) {
+  const episodes = getWatched()[showId]?.episodes;
+  return Array.isArray(episodes) && episodes.includes(episodeId);
+}
+export function toggleEpisodeWatched(show, ep) {
+  const all = getWatched();
+  const prev = Array.isArray(all[show.id]?.episodes) ? all[show.id].episodes : [];
+  const on = !prev.includes(ep.id);
+  const episodes = on ? [...prev, ep.id] : prev.filter((id) => id !== ep.id);
+  if (episodes.length) all[show.id] = { show: showSnapshot(show), episodes, updatedAt: Date.now() };
+  else delete all[show.id];
+  writeJSON(KEYS.watched, all);
+  emit();
+  return on;
+}
+// Tracked shows as { show, episodes, updatedAt }, most recently updated first.
+export function getTrackedShows() {
+  return Object.values(getWatched())
+    .filter((t) => t?.show?.id && Array.isArray(t.episodes))
+    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 }
 
 // TV trivia quiz: the best streak ever, and totals across sessions.
