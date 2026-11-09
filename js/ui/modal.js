@@ -524,6 +524,11 @@ export function open(show, triggerEl, { reveal = null } = {}) {
   firstFocus.focus();
 }
 
+// The element that opened the modal is being removed: return focus to `to` instead.
+export function replaceReturnFocus(from, to) {
+  if (lastFocus === from) lastFocus = to;
+}
+
 export function close() {
   if (!modalRoot || modalRoot.hidden) return;
   // Only touch the URL if nothing else has navigated since the modal opened.
