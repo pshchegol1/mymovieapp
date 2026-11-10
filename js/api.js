@@ -31,10 +31,9 @@ export async function fetchShows(page = 1) {
   return data;
 }
 
+// Cached and retried on 429 like everything else: the show helper chat searches often.
 export async function searchShows(query) {
-  const res = await fetch(`${BASE}/search/shows?q=${encodeURIComponent(query)}`);
-  if (!res.ok) throw new Error(`TVMaze /search ${res.status}`);
-  const data = await res.json();
+  const data = await getJSON(`${BASE}/search/shows?q=${encodeURIComponent(query)}`);
   return data.map((d) => d.show);
 }
 

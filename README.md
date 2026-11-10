@@ -14,6 +14,7 @@ A TV show browser built with plain HTML, CSS and JavaScript modules — no frame
 - **My list** (watchlist), **My ratings** (sort, filter and a breakdown of your scores) and **Recently viewed**, saved in the browser
 - **Tonight** — what's airing on US TV today, plus a **Streaming** tab with today's new episodes on Netflix, Prime Video, Apple TV, Peacock and the rest (season drops grouped into one entry)
 - **Your next episodes** (for shows in My list) and **Upcoming premieres** countdowns in the sidebar, plus **On this day in TV** and **TV trivia** worked out from TVMaze data
+- **Show helper chat**: a few seconds after Home loads, a chat button pops up. Type a show's title for a quick card (rating, years, network, summary), then ask about its cast, next episode, similar shows or binge time, add it to My list, or ask for "something funny". No AI: it answers from TVMaze data
 - Light/dark theme, keyboard accessible, respects "reduce motion"
 
 ## Running locally

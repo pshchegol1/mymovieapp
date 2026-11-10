@@ -6,6 +6,7 @@ const KEYS = {
   theme: 'mm.theme',
   trivia: 'mm.trivia',
   watched: 'mm.watched',
+  chat: 'mm.chat',
 };
 
 const RECENT_MAX = 12;
@@ -150,6 +151,12 @@ export function getTriviaStats() {
   return { best: 0, answered: 0, correct: 0, ...readJSON(KEYS.trivia, {}) };
 }
 export function saveTriviaStats(stats) { writeJSON(KEYS.trivia, stats); }
+
+// Show helper chat: whether the "Need help?" bubble has been dismissed.
+export function getChatState() {
+  return { promptDismissed: false, ...readJSON(KEYS.chat, {}) };
+}
+export function saveChatState(state) { writeJSON(KEYS.chat, state); }
 
 export function getTheme() {
   let v = null;

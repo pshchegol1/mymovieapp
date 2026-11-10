@@ -276,6 +276,45 @@
     <span class="to-top__label" aria-hidden="true">Top</span>
   </button>
 
+  <!-- Show helper chat: the launcher appears a few seconds after Home is shown. -->
+  <div class="chat" data-chat>
+    <div class="chat__prompt" data-chat-prompt hidden>
+      <button type="button" class="chat__prompt-text" data-chat-prompt-open>
+        Need help finding a show? <strong>Ask me!</strong>
+      </button>
+      <button type="button" class="chat__prompt-close" data-chat-prompt-close aria-label="Dismiss">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+    <button type="button" class="chat__launcher" data-chat-launcher hidden
+            aria-expanded="false" aria-controls="chat-panel" aria-label="Open the show helper chat">
+      <i class="fa-solid fa-comment-dots chat__launcher-open" aria-hidden="true"></i>
+      <i class="fa-solid fa-xmark chat__launcher-close" aria-hidden="true"></i>
+    </button>
+    <section class="chat__panel glass glass--strong" id="chat-panel" data-chat-panel hidden
+             role="dialog" aria-labelledby="chat-title">
+      <header class="chat__header">
+        <span class="chat__avatar" aria-hidden="true"><i class="fa-solid fa-tv"></i></span>
+        <div class="chat__heading">
+          <h2 id="chat-title" class="chat__title">Show helper</h2>
+          <p class="chat__subtitle">Ask me about any TV show</p>
+        </div>
+        <button type="button" class="chat__close" data-chat-close aria-label="Close the chat">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+      <ol class="chat__log" data-chat-log role="log" aria-live="polite" aria-busy="false" aria-label="Conversation"></ol>
+      <form class="chat__form" data-chat-form>
+        <label class="sr-only" for="chat-input">Ask about a show</label>
+        <input id="chat-input" class="chat__input" data-chat-input type="text" autocomplete="off"
+               maxlength="120" placeholder="Type a show title…">
+        <button type="submit" class="chat__send" data-chat-send aria-label="Send">
+          <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+        </button>
+      </form>
+    </section>
+  </div>
+
   <div class="modal" data-modal hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal__scrim" data-modal-scrim></div>
     <div class="modal__dialog glass glass--strong">

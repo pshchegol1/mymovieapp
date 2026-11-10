@@ -1154,3 +1154,143 @@ test.describe('episode tracker', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   });
 });
+
+test.describe('show helper chat', () => {
+  const launcher = (page) => page.locator('[data-chat-launcher]');
+  const prompt = (page) => page.locator('[data-chat-prompt]');
+  const panel = (page) => page.locator('[data-chat-panel]');
+  const input = (page) => page.locator('[data-chat-input]');
+  const lastReply = (page) => page.locator('[data-chat-log] .chat__msg--bot:not(.chat__typing)').last();
+
+  // Load Home, wait out the delay, and open the chat.
+  async function openChat(page) {
+    await page.clock.install();
+    await page.goto('/');
+    await expect(cards(page).first()).toBeVisible();
+    await page.clock.fastForward(4000);
+    await launcher(page).click();
+    await expect(panel(page)).toBeVisible();
+  }
+  // The log is aria-busy until every queued message has been answered.
+  const settled = (page) => expect(page.locator('[data-chat-log]')).toHaveAttribute('aria-busy', 'false');
+  async function ask(page, text) {
+    await input(page).fill(text);
+    await input(page).press('Enter');
+    await settled(page);
+  }
+
+  test('pops up a few seconds after Home is shown, not before', async ({ page }) => {
+    await page.clock.install();
+    await page.goto('/#/watchlist');
+    await page.clock.fastForward(10000);
+    await expect(launcher(page)).toBeHidden();
+
+    await page.locator('[data-nav="home"]').click();
+    await page.clock.fastForward(2000);
+    await expect(launcher(page)).toBeHidden();
+    await page.clock.fastForward(2500);
+    await expect(launcher(page)).toBeVisible();
+    await expect(prompt(page)).toContainText('Need help finding a show?');
+  });
+
+  test('a title gets a show card, and Open details opens it', async ({ page }) => {
+    await openChat(page);
+    await expect(input(page)).toBeFocused();
+    await expect(launcher(page)).toHaveAttribute('aria-expanded', 'true');
+    await ask(page, 'alpha');
+    await expect(page.locator('[data-chat-log] .chat-card__title').last()).toHaveText('Alpha Drama');
+    await expect(page.locator('[data-chat-log] .chat-card__meta').last()).toHaveText('2020–present · ★ 8.0 · CBS');
+    await expect(page.locator('[data-chat-log] .chat-card__summary').last()).toHaveText('Alpha Drama summary.');
+    await expect(input(page)).toBeFocused();
+    await page.locator('[data-chat-log] [data-chat-open]').last().click();
+    await expect(page.locator('[data-modal-title]')).toHaveText('Alpha Drama');
+  });
+
+  test('answers follow-ups about the show it is discussing', async ({ page }) => {
+    await openChat(page);
+    await ask(page, 'alpha');
+    const chip = (label) => page.locator('[data-chat-log] [data-chat-chip]').filter({ hasText: label }).last();
+
+    await chip('Cast').click();
+    await settled(page);
+    await expect(lastReply(page)).toContainText('Jamie Example as Detective Ray');
+    await expect(lastReply(page).getByRole('link', { name: 'Jamie Example' })).toHaveAttribute('href', '#/person/50');
+
+    await chip('Next episode').click();
+    await settled(page);
+    await expect(lastReply(page)).toContainText('S2 · E5 · The Return');
+    await expect(lastReply(page)).toContainText('in 3 days');
+
+    await chip('Binge time').click();
+    await settled(page);
+    await expect(lastReply(page)).toContainText('30 episodes over 3 seasons');
+
+    // A follow-up can name a different show.
+    await ask(page, 'next episode of charlie');
+    await expect(lastReply(page)).toContainText('No upcoming episode of Charlie Comedy has been announced yet.');
+  });
+
+  test('adds the show to My list from the card', async ({ page }) => {
+    await openChat(page);
+    await ask(page, 'bravo');
+    const add = page.locator('[data-chat-log] [data-chat-add]').last();
+    await add.click();
+    await expect(page.locator('[data-watchlist-count]')).toHaveText('1');
+    await expect(add).toHaveAttribute('aria-pressed', 'true');
+    await expect(add).toHaveText(/In My list/);
+    await ask(page, 'add it to my list');
+    await expect(lastReply(page)).toContainText('Bravo Drama is already in My list.');
+  });
+
+  test('suggests shows for a mood, and says when nothing matches', async ({ page }) => {
+    await openChat(page);
+    await ask(page, 'something funny');
+    await expect(lastReply(page).locator('.chat-list__name')).toHaveText(['Charlie Comedy']);
+    await lastReply(page).locator('[data-chat-pick]').click();
+    await settled(page);
+    await expect(page.locator('[data-chat-log] .chat-card__title').last()).toHaveText('Charlie Comedy');
+
+    await ask(page, 'zzzz');
+    await expect(lastReply(page)).toHaveText('I couldn’t find a show called “zzzz”. Try another spelling?');
+  });
+
+  test('messages sent while a reply is coming are answered in order, not dropped', async ({ page }) => {
+    await openChat(page);
+    for (const text of ['alpha', 'cast', 'zzzz']) {
+      await input(page).fill(text);
+      await input(page).press('Enter');
+    }
+    await settled(page);
+    await expect(page.locator('[data-chat-log] .chat__msg--user')).toHaveText(['alpha', 'cast', 'zzzz']);
+    const replies = page.locator('[data-chat-log] .chat__msg--bot');
+    await expect(replies.filter({ hasText: 'Jamie Example' })).toHaveCount(1);
+    await expect(replies.last()).toContainText('couldn’t find a show called “zzzz”');
+  });
+
+  test('shows typed HTML as text', async ({ page }) => {
+    await openChat(page);
+    await ask(page, '<img src=x onerror=alert(1)>');
+    await expect(page.locator('[data-chat-log] .chat__msg--user').last()).toHaveText('<img src=x onerror=alert(1)>');
+    await expect(page.locator('[data-chat-log] img[src="x"]')).toHaveCount(0);
+  });
+
+  test('a dismissed prompt stays dismissed, and Esc closes the chat', async ({ page }) => {
+    await page.clock.install();
+    await page.goto('/');
+    await page.clock.fastForward(4000);
+    await page.locator('[data-chat-prompt-close]').click();
+    await expect(prompt(page)).toBeHidden();
+
+    await page.reload();
+    await page.clock.fastForward(4000);
+    await expect(launcher(page)).toBeVisible();
+    await expect(prompt(page)).toBeHidden();
+
+    await launcher(page).click();
+    await expect(input(page)).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(panel(page)).toBeHidden();
+    await expect(launcher(page)).toBeFocused();
+    await expect(launcher(page)).toHaveAttribute('aria-expanded', 'false');
+  });
+});

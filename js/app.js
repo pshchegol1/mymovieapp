@@ -18,6 +18,7 @@ import * as ratings from './ui/ratings.js';
 import * as onThisDay from './ui/on-this-day.js';
 import * as trivia from './ui/trivia.js';
 import * as continueWatching from './ui/continue-watching.js';
+import * as chat from './ui/chat.js';
 import { renderCard, onCardEvent } from './ui/show-card.js';
 import * as router from './router.js';
 import { getWatchlist, getRecent, subscribe, clearRecent } from './storage.js';
@@ -132,6 +133,7 @@ continueWatching.init({ root: $('[data-continue-watching]') });
 
 footer.init({ root: $('[data-footer]'), shows: () => initialShows });
 toTop.init({ button: $('[data-to-top]') });
+chat.init({ root: $('[data-chat]'), shows: () => initialShows });
 
 person.init({ header: $('[data-person-header]'), grid: $('[data-person-grid]') });
 ratings.init({ root: $('[data-ratings]') });
@@ -202,6 +204,7 @@ function setView(view) {
     el.classList.toggle('is-active', el.dataset.nav === view);
   });
   if (view !== 'home') modal.close();
+  else chat.homeShown();
   if (view !== 'person') person.cancel();
   // Only jump to the top on an actual page change (not e.g. closing a show).
   if (view !== currentView) window.scrollTo({ top: 0, behavior: 'auto' });
