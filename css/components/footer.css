@@ -30,7 +30,7 @@
 .footer-col--brand .footer-col__title { margin-top: var(--space-2); }
 
 /* The header hides the brand name on phones; the footer has room for it. */
-.site-footer .brand__name { display: inline; }
+.site-footer .brand__name { display: inline-flex; }
 
 .footer-tagline {
   font-size: var(--fs-sm);
